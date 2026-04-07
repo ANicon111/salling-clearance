@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salling Group Product Search</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            background-color: #f9f9f9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        textarea {
+            resize: vertical;
+        }
+        .help-text {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 4px;
+            display: block;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #results {
+            margin-top: 20px;
+            border-top: 2px solid #eee;
+            padding-top: 15px;
+        }
+        .store-header {
+            background: #f1f1f1;
+            padding: 10px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+        .product-list {
+            list-style-type: none;
+            padding-left: 0;
+            margin: 0;
+        }
+        .product-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px 10px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+        .product-image {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+        .price-discount {
+            color: #d9534f;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .price-regular {
+            text-decoration: line-through;
+            color: #888;
+            font-size: 0.9em;
+            margin-left: 8px;
+        }
+        .error {
+            color: #d9534f;
+            background: #fdf7f7;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #d9534f;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Salling Group Product Search</h1>
+        <form id="searchForm">
+            <div class="form-group">
+                <label for="storeList">Target Stores:</label>
+                <textarea id="storeList" rows="5" placeholder="NETTO: Sønderborg&#10;FOTEX: Aarhus&#10;BILKA: Odense"></textarea>
+                <span class="help-text">Enter one store per line in the format <strong>BRAND: City/Location</strong>.</span>
+            </div>
+            <div class="form-group">
+                <label for="productKeywords">Product Keywords:</label>
+                <input type="text" id="productKeywords" placeholder="e.g., sandwich, kylling, juice">
+            </div>
+            <button type="submit" id="submitBtn">Search Clearance Items</button>
+        </form>
+
+        <div id="results">
+            <h2>Results</h2>
+            <div id="resultsContent"><p>Awaiting search...</p></div>
+        </div>
+    </div>
+
+    <script>
+        const ALIASES = {
+            "NETTO": "TID-2Y7JRG",
+            "FOTEX": "TID-F86K6Y",
+            "BILKA": "TID-BZ929S"
+        };
+
+        async function fetchApi(url, alias) {
+            const response = await fetch(url, {
+                method: "GET",
+                headers: {
+                    "Accept-Encoding": "text/json",
+                    "X-tenantAlias": alias
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return await response.json();
+        }
+
+        document.getElementById('searchForm').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const resultsContent = document.getElementById('resultsContent');
+            const submitBtn = document.getElementById('submitBtn');
+
+            const storeListText = document.getElementById('storeList').value.trim();
+            const productKeywords = document.getElementById('productKeywords').value.trim().toLowerCase();
+
+            const requestedStores = storeListText.split('\n')
+                .map(line => line.split(':'))
+                .filter(parts => parts.length === 2)
+                .map(parts => ({
+                    brand: parts[0].trim().toUpperCase(),
+                    location: parts[1].trim().toLowerCase()
+                }));
+
+            if (!requestedStores.length || !productKeywords) {
+                resultsContent.innerHTML = '<p class="error">Please provide at least one valid store (e.g., NETTO: Sønderborg) and a product keyword.</p>';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Searching...";
+            resultsContent.innerHTML = '<p>Locating stores and searching inventory...</p>';
+
+            try {
+                const uniqueBrands = [...new Set(requestedStores.map(req => req.brand))];
+                let matchedStores = [];
+
+                // Fetch and match stores
+                for (const brand of uniqueBrands) {
+                    if (!ALIASES[brand]) continue;
+
+                    const allStoresForBrand = await fetchApi("https://p-club.dsgapps.dk/api/cp/stores", ALIASES[brand]);
+
+                    const locationsForBrand = requestedStores
+                        .filter(req => req.brand === brand)
+                        .map(req => req.location);
+
+                    const filtered = allStoresForBrand.filter(store => {
+                        const city = (store.address?.city || '').toLowerCase();
+                        const name = (store.name || '').toLowerCase();
+                        return locationsForBrand.some(loc => city.includes(loc) || name.includes(loc));
+                    });
+
+                    filtered.forEach(store => {
+                        matchedStores.push({ ...store, brand, alias: ALIASES[brand] });
+                    });
+                }
+
+                if (matchedStores.length === 0) {
+                    resultsContent.innerHTML = '<p>No stores found matching those locations.</p>';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Search Clearance Items";
+                    return;
+                }
+
+                let resultsHTML = `<h3>Searched in ${matchedStores.length} store(s)</h3>`;
+                let totalFound = 0;
+
+                // Fetch clearance items using the nested JSON structure
+                const productPromises = matchedStores.map(async (store) => {
+                    try {
+                        const storeData = await fetchApi(`https://p-club.dsgapps.dk/api/cp/lpr/clearanceItems?id=${store.id}`, store.alias);
+
+                        // Extract the clearanceItems array from the response object
+                        const items = storeData.clearanceItems || [];
+
+                        const filteredProducts = items.filter(product =>
+                            product.titleTxt && productKeywords.split(',').some(keyword => product.titleTxt.toLowerCase().includes(keyword.trim().toLowerCase()))
+                        );
+
+                        if (filteredProducts.length > 0) {
+                            totalFound += filteredProducts.length;
+                            return `
+                                <div class="store-header">
+                                    <strong>${storeData.storeNameTxt || store.name}</strong> (${store.address.city})
+                                </div>
+                                <ul class="product-list">
+                                    ${filteredProducts.map(product => `
+                                        <li class="product-item">
+                                            ${product.imageUrl ? `<img src="${product.imageUrl}" class="product-image" alt="${product.titleTxt}">` : ''}
+                                            <div>
+                                                <strong>${product.titleTxt}</strong><br>
+                                                <span class="price-discount">${product.discountedPrice} DKK</span>
+                                                ${product.regularPrice ? `<span class="price-regular">${product.regularPrice} DKK</span>` : ''}
+                                                <br>
+                                                <small>
+                                                    <strong>${product.availabilityRangeLabelTxt}</strong>
+                                                    <span style="color: ${product.rangeColorHex}; font-weight: bold;">${product.availabilityRangeTxt}</span>
+                                                    <br>${product.lastUpdateTxt}
+                                                </small>
+                                            </div>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            `;
+                        }
+                    } catch (err) {
+                        console.error(`Failed to fetch items for ${store.name}`, err);
+                        return `<p class="error">Failed to fetch inventory for ${store.brand} ${store.name}.</p>`;
+                    }
+                    return '';
+                });
+
+                const renderedStores = await Promise.all(productPromises);
+                const finalContent = renderedStores.join('');
+
+                if (totalFound === 0) {
+                    resultsContent.innerHTML = resultsHTML + `<p>No clearance items found matching "<strong>${productKeywords}</strong>" in the selected locations.</p>`;
+                } else {
+                    resultsContent.innerHTML = resultsHTML + `<p>Found ${totalFound} items matching "<strong>${productKeywords}</strong>":</p>` + finalContent;
+                }
+
+            } catch (error) {
+                resultsContent.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Search Clearance Items";
+            }
+        });
+    </script>
+</body>
+</html>

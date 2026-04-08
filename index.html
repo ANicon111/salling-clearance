@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9f9f9">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212">
+
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="icon.png">
     <title>Salling Group Product Search</title>
@@ -12,6 +17,7 @@
             margin: 20px;
             line-height: 1.6;
             background-color: #f9f9f9;
+            color: #333; /* Explicit default text color */
         }
         .container {
             max-width: 800px;
@@ -140,6 +146,54 @@
             border-radius: 8px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             object-fit: contain;
+        }
+
+        /* --- Dark Theme Support --- */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+            .container {
+                background: #1e1e1e;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+            }
+            input[type="text"], textarea {
+                background-color: #2c2c2c;
+                color: #e0e0e0;
+                border-color: #444;
+            }
+            input[type="text"]::placeholder, textarea::placeholder {
+                color: #888;
+            }
+            .help-text {
+                color: #a0a0a0;
+            }
+            button:disabled {
+                background-color: #444;
+                color: #777;
+            }
+            #results {
+                border-top-color: #333;
+            }
+            .store-header {
+                background: #2d2d2d;
+                color: #fff;
+            }
+            .product-item {
+                border-bottom-color: #333;
+            }
+            .product-image {
+                border-color: #444;
+            }
+            .price-regular {
+                color: #aaa;
+            }
+            .error {
+                background: #3a1c1c;
+                color: #ff8a80;
+                border-color: #d9534f;
+            }
         }
     </style>
 </head>

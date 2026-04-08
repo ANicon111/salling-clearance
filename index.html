@@ -92,6 +92,11 @@
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid #ddd;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+        .product-image:hover {
+            transform: scale(1.05);
         }
         .price-discount {
             color: #d9534f;
@@ -111,9 +116,38 @@
             border-radius: 4px;
             border: 1px solid #d9534f;
         }
+
+        /* --- New Lightbox Zoom Styles --- */
+        .zoom-overlay {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+        }
+        .zoom-overlay.active {
+            display: flex;
+        }
+        .zoom-overlay img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            object-fit: contain;
+        }
     </style>
 </head>
 <body>
+    <div id="zoomOverlay" class="zoom-overlay" onclick="this.classList.remove('active')">
+        <img id="zoomedImage" src="" alt="Zoomed Product">
+    </div>
+
     <div class="container">
         <h1>Salling Group Product Search</h1>
         <form id="searchForm">
@@ -164,6 +198,12 @@
                 }
             }
             return "";
+        }
+
+        // New function to handle the zoom behavior
+        function openZoom(src) {
+            document.getElementById('zoomedImage').src = src;
+            document.getElementById('zoomOverlay').classList.add('active');
         }
 
         document.getElementById('storeList').value = getCookie("store-list");
@@ -264,7 +304,11 @@
                                 <ul class="product-list">
                                     ${filteredProducts.map(product => `
                                         <li class="product-item">
-                                            ${product.imageUrl ? `<img src="${product.imageUrl}" class="product-image" alt="${product.titleTxt}">` : ''}
+                                            <img src="${product.imageUrl || 'product.png'}"
+                                                 onerror="this.onerror=null; this.src='product.png';"
+                                                 class="product-image"
+                                                 alt="${product.titleTxt}"
+                                                 onclick="openZoom(this.src)">
                                             <div>
                                                 <strong>${product.titleTxt}</strong><br>
                                                 <span class="price-discount">${product.discountedPrice} DKK</span>

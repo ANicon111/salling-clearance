@@ -308,12 +308,24 @@
             document.getElementById('storeList').value = getCookie("store-list");
             document.getElementById('productKeywords').value = getCookie("product-keywords");
 
-            async function fetchApi(url, alias) {
+            async function fetchApiTenant(url, alias) {
                 const response = await fetch(url, {
                     method: "GET",
                     headers: {
                         "Accept-Encoding": "text/json",
                         "X-tenantAlias": alias
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            }
+            async function fetchApi(url) {
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        "Accept-Encoding": "text/json"
                     }
                 });
                 if (!response.ok) {
@@ -355,7 +367,7 @@
                     for (const brand of uniqueBrands) {
                         if (!ALIASES[brand]) continue;
 
-                        const allStoresForBrand = await fetchApi("https://p-club.dsgapps.dk/api/cp/stores", ALIASES[brand]);
+                        const allStoresForBrand = await fetchApiTenant("https://p-club.dsgapps.dk/api/cp/stores", ALIASES[brand]);
 
                         const locationsForBrand = requestedStores
                             .filter(req => req.brand === brand)
@@ -382,10 +394,59 @@
                     let resultsHTML = `<h3>Searched in ${matchedStores.length} store(s)</h3>`;
                     let totalFound = 0;
 
-                    // Fetch clearance items using the nested JSON structure
-                    const productPromises = matchedStores.map(async (store) => {
+                    const promotionPromises = uniqueBrands.map(async (brand) => {
                         try {
-                            const storeData = await fetchApi(`https://p-club.dsgapps.dk/api/cp/lpr/clearanceItems?id=${store.id}`, store.alias);
+                            const leafletsOrder = await fetchApiTenant('https://p-club.dsgapps.dk/api/cp/leafletsOrder', ALIASES[brand]);
+
+                            const leaflet = leafletsOrder.leafletIds[brand == "BILKA" ? 1 : 0];
+
+                            const leafletPages = await fetchApi(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/pages`);
+
+
+                            const promotions = await fetchApi(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/hotspots`);
+
+                            const filteredProducts = promotions.filter(product =>
+                                product.offer.heading && (!productKeywords || productKeywords.split(',').some(keyword => product.offer.heading.toLowerCase().includes(keyword.trim())))
+                            );
+
+                            if (filteredProducts.length > 0) {
+                                totalFound += filteredProducts.length;
+                                return `
+                                <div class="store-header">
+                                    <strong>${brand}</strong>
+                                </div>
+                                <ul class="product-list">
+                                    ${filteredProducts.map(product => `
+                                        <li class="product-item">
+                                            <img src="${leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png'}"
+                                                 onerror="this.onerror=null; this.src='product.png';"
+                                                 class="product-image"
+                                                 alt="${product.offer.heading}"
+                                                 onclick="openZoom('${leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png'}')">
+                                            <div>
+                                                <strong>${product.offer.heading}</strong><br>
+                                                <span class="price-discount">${product.offer.pricing.price} DKK</span>
+                                                ${product.offer.pricing.pre_price ? `<span class="price-regular">${product.offer.pricing.pre_price} DKK</span>` : ''}
+                                                <br>
+                                                ${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}
+                                                <small>
+                                                    <br>${product.offer.run_from} - ${product.offer.run_till}
+                                                </small>
+                                            </div>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            `;
+                            }
+                        } catch (err) {
+                            console.error(`Failed to fetch items for ${brand}`, err);
+                            return `<p class="error">Failed to fetch promotions for ${brand}.</p>`;
+                        }
+                        return '';
+                    });
+                    const clearancePromises = matchedStores.map(async (store) => {
+                        try {
+                            const storeData = await fetchApiTenant(`https://p-club.dsgapps.dk/api/cp/lpr/clearanceItems?id=${store.id}`, store.alias);
 
                             // Extract the clearanceItems array from the response object
                             const items = storeData.clearanceItems || [];
@@ -431,8 +492,9 @@
                         return '';
                     });
 
-                    const renderedStores = await Promise.all(productPromises);
-                    const finalContent = renderedStores.join('');
+                    const renderedPromotions = await Promise.all(promotionPromises);
+                    const renderedStores = await Promise.all(clearancePromises);
+                    const finalContent = renderedStores.join('') + renderedPromotions.join('');
 
                     if (totalFound === 0) {
                         resultsContent.innerHTML = resultsHTML + `<p>No clearance items found matching "<strong>${productKeywords}</strong>" in the selected locations.</p>`;

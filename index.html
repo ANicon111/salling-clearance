@@ -422,8 +422,8 @@
                                 <ul class="product-list">
                                     ${filteredProducts.map(product => {
                                     try {
-                                        aspectRatio = Math.SQRT2;
-                                        if (brand == "FOTEX") aspectRatio = 7 / 8 //cause why not
+                                        aspectRatio = 7 / 8;
+                                        if (brand == "NETTO") aspectRatio = Math.SQRT2 //cause why not
                                         const points = Object.values(product.locations)[0];
                                         x1 = points[0][0];
                                         x2 = points[2][0];
@@ -447,7 +447,7 @@
                                                 <div class="product-image" onclick="openZoom('${leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png'}')">
                                                     <img src="${leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png'}"
                                                         onerror="this.onerror=null; this.src='product.png';"
-                                                        style="width:${vmin}px; height:${vmin * Math.SQRT2}px; margin:-${top}px -${right}px -${bottom}px -${left}px;"
+                                                        style="width:${vmin}px; height:${vmin * aspectRatio}px; margin:-${top}px -${right}px -${bottom}px -${left}px;"
                                                         alt="${product.offer.heading}">
                                                 </div>
                                                 <div>

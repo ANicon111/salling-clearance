@@ -422,6 +422,8 @@
                                 <ul class="product-list">
                                     ${filteredProducts.map(product => {
                                     try {
+                                        aspectRatio = Math.SQRT2;
+                                        if (brand == "FOTEX") aspectRatio = 7 / 8 //cause why not
                                         const points = Object.values(product.locations)[0];
                                         x1 = points[0][0];
                                         x2 = points[2][0];
@@ -431,13 +433,13 @@
                                         x2 = x1 + square;
                                         y2 = y1 + square;
                                         if (x1 + square > 1) { x1 = 1 - square; x2 = 1; }
-                                        if (y1 + square > Math.SQRT2) { y1 = Math.SQRT2 - square; y2 = Math.SQRT2; }
+                                        if (y1 + square > aspectRatio) { y1 = aspectRatio - square; y2 = aspectRatio; }
                                         const width = 70 / (x2 - x1);
                                         const height = 70 / (y2 - y1);
                                         const vmin = Math.min(width, height);
                                         const top = y1 * vmin;
                                         const right = (1 - x2) * vmin;
-                                        const bottom = (Math.SQRT2 - y2) * vmin;
+                                        const bottom = (aspectRatio - y2) * vmin;
                                         const left = x1 * vmin;
 
                                         return `

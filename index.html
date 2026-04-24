@@ -112,7 +112,8 @@
         .product-image {
             width: 70px;
             height: 70px;
-            object-fit: cover;
+            object-fit: contain;
+            overflow: hidden;
             border-radius: 6px;
             border: 1px solid #ddd;
             cursor: pointer;
@@ -246,7 +247,8 @@
                 <label for="storeList">Target Stores:</label>
                 <textarea id="storeList" rows="5" placeholder="NETTO: Lufthavnen&#10;FOTEX: Aarhus"></textarea>
                 <span class="help-text">Enter one store per line in the format <strong>BRAND:
-                        Name/Location</strong>.</span>
+                        Name/Location</strong>.<br>NOTE: To avoid excessive requests, each line can only match up to 3
+                    stores</span>
             </div>
             <div class="form-group">
                 <label for="productKeywords">Product Keywords:</label>
@@ -377,7 +379,7 @@
                             const city = (store.address?.city || '').toLowerCase();
                             const name = (store.name || '').toLowerCase();
                             return locationsForBrand.some(loc => city.includes(loc) || name.includes(loc));
-                        });
+                        }).slice(0, 3); // max 3 matches per location to not ddos salling if someone puts NETTO: København or something
 
                         filtered.forEach(store => {
                             matchedStores.push({ ...store, brand, alias: ALIASES[brand] });
@@ -416,25 +418,50 @@
                                     <strong>${brand}</strong>
                                 </div>
                                 <ul class="product-list">
-                                    ${filteredProducts.map(product => `
-                                        <li class="product-item">
-                                            <img src="${leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png'}"
-                                                 onerror="this.onerror=null; this.src='product.png';"
-                                                 class="product-image"
-                                                 alt="${product.offer.heading}"
-                                                 onclick="openZoom('${leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png'}')">
-                                            <div>
-                                                <strong>${product.offer.heading}</strong><br>
-                                                <span class="price-discount">${product.offer.pricing.price} DKK</span>
-                                                ${product.offer.pricing.pre_price ? `<span class="price-regular">${product.offer.pricing.pre_price} DKK</span>` : ''}
-                                                <br>
-                                                ${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}
-                                                <small>
-                                                    <br>${product.offer.run_from} - ${product.offer.run_till}
-                                                </small>
-                                            </div>
-                                        </li>
-                                    `).join('')}
+                                    ${filteredProducts.map(product => {
+                                    try {
+                                        const points = Object.values(product.locations)[0];
+                                        x1 = points[0][0];
+                                        x2 = points[2][0];
+                                        y1 = points[0][1];
+                                        y2 = points[2][1];
+                                        const square = Math.max(x2 - x1, y2 - y1);
+                                        x2 = x1 + square;
+                                        y2 = y1 + square;
+                                        if (x1 + square > 1) { x1 = 1 - square; x2 = 1; }
+                                        if (y1 + square > Math.SQRT2) { y1 = Math.SQRT2 - square; y2 = Math.SQRT2; }
+                                        const width = 70 / (x2 - x1);
+                                        const height = 70 / (y2 - y1);
+                                        const vmin = Math.min(width, height);
+                                        const top = y1 * vmin;
+                                        const right = (1 - x2) * vmin;
+                                        const bottom = (Math.SQRT2 - y2) * vmin;
+                                        const left = x1 * vmin;
+
+                                        return `
+                                            <li class="product-item">
+                                                <div class="product-image" onclick="openZoom('${leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png'}')">
+                                                    <img src="${leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png'}"
+                                                        onerror="this.onerror=null; this.src='product.png';"
+                                                        style="width:${vmin}px; height:${vmin * Math.SQRT2}px; margin:-${top}px -${right}px -${bottom}px -${left}px;"
+                                                        alt="${product.offer.heading}">
+                                                </div>
+                                                <div>
+                                                    <strong>${product.offer.heading}</strong><br>
+                                                    <span class="price-discount">${product.offer.pricing.price} DKK</span>
+                                                    ${product.offer.pricing.pre_price ? `<span class="price-regular">${product.offer.pricing.pre_price} DKK</span>` : ''}
+                                                    <br>
+                                                    ${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}
+                                                    <small>
+                                                        <br>${product.offer.run_from} - ${product.offer.run_till}
+                                                    </small>
+                                                </div>
+                                            </li>
+                                        `
+                                    } catch {
+                                        return ''
+                                    }
+                                }).join('')}
                                 </ul>
                             `;
                             }

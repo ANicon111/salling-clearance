@@ -64,27 +64,45 @@ function validateStoreLine(line) {
  * 
  * @param {string} url 
  * @param {string | null} headers 
+ * @param {number} [validForSeconds=0] 
  */
-async function genericGet(url, headers) {
+async function genericGet(url, headers, validForSeconds = 5) {
+    const time = new Date();
+    const getCache = JSON.parse(localStorage.getItem(`get-${url}`));
+    if (getCache != null && new Date(getCache.expiry) > time) {
+        console.log(getCache);
+        return getCache.value;
+    }
     const response = await fetch(url, {
         method: "GET",
         headers: headers
     });
+
     if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return await response.json();
+    result = await response.json()
+    if (validForSeconds > 0) {
+        localStorage.setItem(`get-${url}`, JSON.stringify({
+            value: result,
+            expiry: new Date(time.getTime() + validForSeconds * 1000),
+        }));
+    }
+    return result;
 }
 
 /**
  * 
  * @param {string} url 
+ * @param {number} [validForSeconds=0] 
  */
-async function apiGet(url) {
-    return genericGet(url,
+async function apiGet(url, validForSeconds = 5) {
+    return genericGet(
+        url,
         {
             "Accept-Encoding": "text/json",
-        }
+        },
+        validForSeconds
     );
 }
 
@@ -92,13 +110,16 @@ async function apiGet(url) {
  * 
  * @param {string} url 
  * @param {string} tenantAlias 
+ * @param {number} [validForSeconds=0] 
  */
-async function tenantApiGet(url, tenantAlias) {
-    return genericGet(url,
+async function tenantApiGet(url, tenantAlias, validForSeconds = 5) {
+    return genericGet(
+        url,
         {
             "Accept-Encoding": "text/json",
             "X-tenantAlias": tenantAlias,
-        }
+        },
+        validForSeconds
     );
 }
 
@@ -130,7 +151,7 @@ function addError(error) {
     document.getElementById('resultMessages').innerHTML += `<p class="error">${lang.errorPrefix}: ${error}</p>`;
 }
 
-let brandAllStoreList = {};
+const brandAllStoreList = {};
 /**
  * 
  * @param {string} brand 
@@ -171,9 +192,9 @@ async function search(event) {
             continue;
         }
 
-        if (brandAllStoreList[brand] == null) {
-            brandAllStoreList[brand] = await tenantApiGet("https://p-club.dsgapps.dk/api/cp/stores", config.aliases[brand]);
-        }
+
+        brandAllStoreList[brand] = await tenantApiGet("https://p-club.dsgapps.dk/api/cp/stores", config.aliases[brand], 3600);
+
 
         if (brandStoreList[brand] == null) {
             brandStoreList[brand] = {};
@@ -206,10 +227,10 @@ async function search(event) {
 
             const leaflet = leafletsOrder.leafletIds[brand == "BILKA" ? 1 : 0];
 
-            const leafletPages = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/pages`);
+            const leafletPages = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/pages`, 3600);
 
 
-            const promotions = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/hotspots`);
+            const promotions = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/hotspots`, 3600);
 
             const filteredProducts = promotions.filter(product =>
                 product.offer.heading && (
@@ -229,8 +250,8 @@ async function search(event) {
                             leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png',
                             leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png',
                             product.offer.heading,
-                            product.offer.pricing.price,
-                            product.offer.pricing.pre_price,
+                            product.offer.pricing.price.toPrecision(2),
+                            product.offer.pricing.pre_price?.toPrecision(2),
                             `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}`,
                             lang.availableBetween(
                                 product.offer.run_from.split('T')[0],
@@ -273,8 +294,8 @@ async function search(event) {
                                 product.imageUrl || 'product.png',
                                 product.imageUrl || 'product.png',
                                 product.titleTxt,
-                                product.discountedPrice,
-                                product.regularPrice,
+                                product.discountedPrice.toPrecision(2),
+                                product.regularPrice.toPrecision(2),
                                 lang.availableProducts(availability.slice(0, availability.length - 1).join(' '), product.rangeColorHex, storeData.storeNameTxt || store.name, store.address.city),
                                 `${lang.lastUpdate}: ${parseDanishDate(product.lastUpdateTxt.split(':')[1].trim()).toISOString().replace('T', ' ').split(':').slice(0, 2).join(':')}`,
                                 null,
@@ -309,7 +330,7 @@ async function search(event) {
     if (totalProducts > 0) {
         addMessage(lang.messages.foundPromotions(totalProducts, brandList.length, totalStores));
         window.scroll({
-            top: resultContent.getBoundingClientRect().top,
+            top: resultContent.getBoundingClientRect().top + window.scrollY,
             behavior: "smooth",
         })
     } else {

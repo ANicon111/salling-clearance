@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I18n JSON Comparator</title>
+    <script>const translation = {}</script>
+    <script src="en/lang.js"></script>
+    <script src="da/lang.js"></script>
+    <style>
+        body {
+            font-family: system-ui;
+            line-height: 1.5;
+            padding: 20px;
+            background: #f4f7f6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            background: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .results {
+            margin-top: 20px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #f8f9fa;
+        }
+
+        .missing {
+            color: #d9534f;
+            background: #fff5f5;
+        }
+
+        .mismatch {
+            color: #f0ad4e;
+        }
+
+        .path {
+            font-family: monospace;
+            font-size: 0.9em;
+            background: #eee;
+            padding: 2px 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>I18n Comparator</h2>
+        <input id="otherLanguage" type="text" placeholder="da">
+        <button onclick="compareFiles()">Check Structure</button>
+
+        <div id="output" class="results" style="display:none;">
+            <div id="summary"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Key Path</th>
+                        <th>File A</th>
+                        <th>File B</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function flattenObject(obj, prefix = '', res = {}) {
+            for (const key in obj) {
+                const propName = prefix ? `${prefix}.${key}` : key;
+                if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                    flattenObject(obj[key], propName, res);
+                } else {
+                    res[propName] = obj[key];
+                }
+            }
+            return res;
+        }
+
+        function compareFiles() {
+            const resultBody = document.getElementById('resultBody');
+            const outputDiv = document.getElementById('output');
+            const langB = document.getElementById("otherLanguage").value;
+
+            if (!translation["en"] || !translation[langB]) return alert("Language data not found.");
+
+            const objA = flattenObject(translation["en"]);
+            const objB = flattenObject(translation[langB]);
+            const allKeys = Array.from(new Set([...Object.keys(objA), ...Object.keys(objB)])).sort();
+
+            let issuesFound = 0;
+            const rows = allKeys.map(key => {
+                const valA = objA[key], valB = objB[key];
+                let status = '', rowClass = '';
+
+                if (!(key in objB)) { [status, rowClass] = ['Missing in ' + langB, 'missing']; issuesFound++; }
+                else if (!(key in objA)) { [status, rowClass] = ['Extra in ' + langB, 'missing']; issuesFound++; }
+                else if (valA === valB) { [status, rowClass] = ['Match', 'mismatch']; issuesFound++; }
+                else return '';
+
+                return `<tr class="${rowClass}">
+                    <td class="path">${key}</td>
+                    <td>${valA ?? '<em>undefined</em>'}</td>
+                    <td>${valB ?? '<em>undefined</em>'}</td>
+                    <td>${status}</td>
+                </tr>`;
+            });
+
+            resultBody.innerHTML = rows.join('');
+            document.getElementById('summary').innerHTML = issuesFound
+                ? `<strong>Found ${issuesFound} differences.</strong>`
+                : `<strong style="color: green;">Files match!</strong>`;
+            outputDiv.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>

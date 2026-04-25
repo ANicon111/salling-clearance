@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9f9f9">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212">
+
+    <link rel="manifest" href="../manifest.json" />
+    <link rel="icon" href="../icon.png">
+    <link rel="stylesheet" href="../style.css">
+    <script src="../javascript/config.js"></script>
+    <script src="lang.js"></script>
+    <script src="../javascript/product.js"></script>
+    <script src="../javascript/script.js"></script>
+    <title>Salling Deal Hunter</title>
+</head>
+
+<body onload="pageInit();">
+    <div id="zoomOverlay" class="zoom-overlay" onclick="this.classList.remove('active')">
+        <img id="zoomedImage" src="" alt="Zoomed Product">
+    </div>
+
+    <div class="container">
+        <h1>Salling Deal Hunter</h1>
+        <form id="searchForm" style="text-align: center;">
+            <div class="formGroup">
+                <label for="storeList">Target Stores:</label>
+                <textarea id="storeList" rows="5"
+                    placeholder="NETTO: Lufthavnen&#10;FOTEX: Aarhus&#10;BILKA"></textarea>
+                <div class="helpText">
+                    Enter one store per line in the format
+                    <strong>BRAND: Name/Location</strong> or just <strong>BRAND</strong>
+                    to only get leaflet promotions.</strong><br>
+                    <small><i>NOTE: To avoid excessive requests, each line can only match up to 3 stores,<br>
+                            and an app refresh is required to re-download the store list.</i></small>
+                </div>
+            </div>
+            <div class="formGroup">
+                <label for="productKeywords">Product Keywords:</label>
+                <input type="text" id="productKeywords" placeholder="brød, mælk">
+            </div>
+            <span>
+                <button type="submit" id="searchButton" onclick="saveUserData();"
+                    style="width: calc( 100% - 50px );margin-right: 5px;">Search</button><button type="button"
+                    id="exportButton" onclick="exportUserDataToClipboard();" style="width: 40px;margin-left: 5px;"><img
+                        style="width: 100%; height: 100%; object-fit: contain;" src="../copy.svg"></button>
+            </span>
+        </form>
+
+        <div id="results">
+            <h2>Results</h2>
+            <div id="resultMessages"></div>
+            <div id="resultContent">
+                <p>Awaiting search...</p>
+            </div>
+        </div>
+    </div>
+
+    <p style="text-align:center;">
+        <i>
+            Placeholder and logo images courtesy of Google Emoji Kitchen<br>
+            Product images courtesy of the Salling Group
+        </i>
+    </p>
+</body>

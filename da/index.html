@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9f9f9">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121212">
+
+    <link rel="manifest" href="../manifest.json" />
+    <link rel="icon" href="../icon.png">
+    <link rel="stylesheet" href="../style.css">
+    <script src="../javascript/config.js"></script>
+    <script src="lang.js"></script>
+    <script src="../javascript/product.js"></script>
+    <script src="../javascript/script.js"></script>
+    <title>Salling Deal Hunter</title>
+</head>
+
+<body onload="pageInit();">
+    <div id="zoomOverlay" class="zoom-overlay" onclick="this.classList.remove('active')">
+        <img id="zoomedImage" src="" alt="Forstørret produkt">
+    </div>
+
+    <div class="container">
+        <h1>Salling Deal Hunter</h1>
+        <form id="searchForm" style="text-align: center;">
+            <div class="formGroup">
+                <label for="storeList">Målbutikker:</label>
+                <textarea id="storeList" rows="5"
+                    placeholder="NETTO: Lufthavnen&#10;FOTEX: Aarhus&#10;BILKA"></textarea>
+                <div class="helpText">
+                    Indtast én butik pr. linje i formatet
+                    <strong>MÆRKE: Navn/Placering</strong> eller blot <strong>MÆRKE</strong>
+                    for kun at få tilbud fra tilbudsavis.</strong><br>
+                    <small><i>BEMÆRK: For at undgå for mange forespørgsler kan hver linje kun matche op til 3
+                            butikker,<br>
+                            og en opdatering af appen er nødvendig for at hente butiklisten igen.</i></small>
+                </div>
+            </div>
+            <div class="formGroup">
+                <label for="productKeywords">Produktnøgleord:</label>
+                <input type="text" id="productKeywords" placeholder="brød, mælk">
+            </div>
+            <span>
+                <button type="submit" id="searchButton" onclick="saveUserData();"
+                    style="width: calc( 100% - 50px );margin-right: 5px;">Søg</button><button type="button"
+                    id="exportButton" onclick="exportUserDataToClipboard();" style="width: 40px;margin-left: 5px;"><img
+                        style="width: 100%; height: 100%; object-fit: contain;" src="../copy.svg"></button>
+            </span>
+        </form>
+
+        <div id="results">
+            <h2>Resultater</h2>
+            <div id="resultMessages"></div>
+            <div id="resultContent">
+                <p>Afventer søgning...</p>
+            </div>
+        </div>
+    </div>
+
+    <p style="text-align:center;">
+        <i>
+            Pladsholder- og logo-billeder med tilladelse fra Google Emoji Kitchen<br>
+            Produktbilleder med tilladelse fra Salling Group
+        </i>
+    </p>
+</body>

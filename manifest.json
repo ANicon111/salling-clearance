@@ -1,5 +1,9 @@
 {
-  "name": "Salling Clearance",
+  "lang": "en",
+  "name": "Salling Deal Hunter",
+  "name_localized": {
+    "da": "Salling Tilbudsjæger"
+  },
   "start_url": "./",
   "icons": [
     {

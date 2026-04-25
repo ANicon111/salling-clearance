@@ -60,17 +60,31 @@ function validateStoreLine(line) {
     }
 }
 
+function cleanLocalStorage() {
+    const deleteList = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = JSON.parse(localStorage.getItem(key));
+        if (new Date(value.expiry) < new Date()) {
+            deleteList.push(key);
+        }
+    }
+    for (let i = 0; i < deleteList.length; i++) {
+        localStorage.removeItem(deleteList[i]);
+    }
+}
+
 /**
  * 
  * @param {string} url 
- * @param {string | null} headers 
+ * @param {*} headers 
  * @param {number} [validForSeconds=0] 
  */
 async function genericGet(url, headers, validForSeconds = 5) {
     const time = new Date();
-    const getCache = JSON.parse(localStorage.getItem(`get-${url}`));
-    if (getCache != null && new Date(getCache.expiry) > time) {
-        console.log(getCache);
+    const cacheID = `get-${url}-${Object.keys(headers).join('_')}-${Object.values(headers).join('_')}`;
+    const getCache = JSON.parse(localStorage.getItem(cacheID));
+    if (getCache != null) {
         return getCache.value;
     }
     const response = await fetch(url, {
@@ -83,7 +97,7 @@ async function genericGet(url, headers, validForSeconds = 5) {
     }
     result = await response.json()
     if (validForSeconds > 0) {
-        localStorage.setItem(`get-${url}`, JSON.stringify({
+        localStorage.setItem(cacheID, JSON.stringify({
             value: result,
             expiry: new Date(time.getTime() + validForSeconds * 1000),
         }));
@@ -182,6 +196,8 @@ async function search(event) {
     searchButton.textContent = lang.searching;
     const brandStoreList = {};
 
+    cleanLocalStorage();
+
     // get matched stores
     for (let i = 0; i < storeListLines.length; i++) {
         const line = storeListLines[i];
@@ -250,8 +266,8 @@ async function search(event) {
                             leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png',
                             leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png',
                             product.offer.heading,
-                            product.offer.pricing.price.toPrecision(2),
-                            product.offer.pricing.pre_price?.toPrecision(2),
+                            product.offer.pricing.price.toPrecision(3),
+                            product.offer.pricing.pre_price?.toPrecision(3),
                             `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}`,
                             lang.availableBetween(
                                 product.offer.run_from.split('T')[0],

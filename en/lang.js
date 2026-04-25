@@ -3,6 +3,10 @@ translation["en"] = {
     errorPrefix: "ERROR",
     search: "Search",
     searching: "Searching...",
+    lastUpdate: "Last update",
+    availableBetween(from, to) {
+        return `Available between ${from} and ${to}`;
+    },
     availableProducts(count, countColor, store, location) {
         return `<span style="color: ${countColor}; font-weight: bold;">${count}</span> available in <strong>${store}${location != null ? ` (${location})` : ''}</strong>.`
     },
@@ -34,4 +38,4 @@ translation["en"] = {
     }
 }
 
-lang = translation["en"];
+var lang = translation["en"];

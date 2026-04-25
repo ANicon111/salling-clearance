@@ -3,6 +3,10 @@ translation["da"] = {
     errorPrefix: "FEJL",
     search: "Søg",
     searching: "Søger...",
+    lastUpdate: "Sidst opdateret",
+    availableBetween(from, to) {
+        return `Tilgængelig fra ${from} til ${to}`;
+    },
     availableProducts(count, countColor, store, location) {
         return `<span style="color: ${countColor}; font-weight: bold;">${count}</span> tilgængelig i <strong>${store}${location != null ? ` (${location})` : ''}</strong>.`;
     },
@@ -34,4 +38,4 @@ translation["da"] = {
     }
 }
 
-lang = translation["da"];
+var lang = translation["da"];

@@ -48,11 +48,11 @@ function leafletCropSalling(brand, locations) {
  * @param {boolean} smallImageZoom the zoom into the thumbnail image, disregarding the large image
  * @returns
  */
-function productHTML(brand, largeImage, thumbImage, title, price, originalPrice, extraInfo, startDate, endDate = null, leafletLocationsSalling = null, smallImageZoom = false) {
+function productHTML(brand, largeImage, thumbImage, title, price, originalPrice, extraInfo, dateLine, leafletLocationsSalling = null, smallImageZoom = false) {
     const imageStyle = leafletCropSalling(brand, leafletLocationsSalling);
     return `
-        <li class="product-item">
-            <div class="product-image" onclick="openProductZoom(${smallImageZoom ? "this.children[0].src" : `'${largeImage || config.placeholderImage}'`});">
+        <li class="productItem">
+            <div class="productImage" onclick="openProductZoom(${smallImageZoom ? "this.children[0].src" : `'${largeImage || config.placeholderImage}'`});">
                 <img src="${thumbImage || config.placeholderImage}"
                     onerror="this.onerror=null; this.src='${config.placeholderImage}';"
                     ${imageStyle}
@@ -60,12 +60,12 @@ function productHTML(brand, largeImage, thumbImage, title, price, originalPrice,
             </div>
             <div>
                 <strong>${title}</strong><br>
-                <span class="price-discount">${price} DKK</span>
-                ${originalPrice ? `<span class="price-regular">${originalPrice} DKK</span>` : ''}
+                <span class="priceDiscount">${price} DKK</span>
+                ${originalPrice ? `<span class="priceRegular">${originalPrice} DKK</span>` : ''}
                 <br>
                 ${extraInfo}
                 <small>
-                    <br>${startDate}${endDate != null ? ` - ${endDate}` : ''}
+                    <br>${dateLine}
                 </small>
             </div>
         </li>

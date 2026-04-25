@@ -21,7 +21,7 @@
 </head>
 
 <body onload="pageInit();">
-    <div id="zoomOverlay" class="zoom-overlay" onclick="this.classList.remove('active')">
+    <div id="zoomOverlay" class="zoomOverlay" onclick="this.classList.remove('active')">
         <img id="zoomedImage" src="" alt="Forstørret produkt">
     </div>
     <div class="container">
@@ -36,9 +36,8 @@
                     Indtast én butik pr. linje i formatet
                     <strong>MÆRKE: Navn/Placering</strong> eller blot <strong>MÆRKE</strong>
                     for kun at få tilbud fra tilbudsavis.</strong><br>
-                    <small><i>BEMÆRK: For at undgå for mange forespørgsler kan hver linje kun matche op til 3
-                            butikker,<br>
-                            og en opdatering af appen er nødvendig for at hente butiklisten igen.</i></small>
+                    <small><i>BEMÆRK: For at undgå begrænsninger kan hver linje kun matche op til 3 butikker,
+                            og en genindlæse af appen er nødvendig for at hente butiklisten igen.</i></small>
                 </div>
             </div>
             <div class="formGroup">

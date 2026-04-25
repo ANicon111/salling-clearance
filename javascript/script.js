@@ -150,7 +150,7 @@ function getStores(brand, location) {
  * @param {SubmitEvent} event 
  */
 async function search(event) {
-    event.preventDefault();
+    event?.preventDefault();
     const storeListLines = document.getElementById('storeList').value.split('\n');
     const searchButton = document.getElementById('searchButton');
     const productKeywords = document.getElementById('productKeywords').value;
@@ -222,23 +222,31 @@ async function search(event) {
 
             if (filteredProducts.length > 0) {
                 filteredProducts.forEach(product => {
-                    productList.push(productHTML(
-                        brand,
-                        leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png',
-                        leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png',
-                        product.offer.heading,
-                        product.offer.pricing.price,
-                        product.offer.pricing.pre_price,
-                        `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}`,
-                        product.offer.run_from,
-                        product.offer.run_till,
-                        product.locations
-                    ))
+                    const pricePerUnit = product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor;
+                    productList.push({
+                        html: productHTML(
+                            brand,
+                            leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png',
+                            leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png',
+                            product.offer.heading,
+                            product.offer.pricing.price,
+                            product.offer.pricing.pre_price,
+                            `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}`,
+                            lang.availableBetween(
+                                product.offer.run_from.split('T')[0],
+                                product.offer.run_till.split('T')[0]
+                            ),
+                            product.locations
+                        ),
+                        pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
+                            ? (pricePerUnit).toFixed(2) : config.priceThreshold,
+                        price: product.discountedPrice,
+                        amountAvailable: 6,
+                    })
                 });
             }
         } catch (e) {
             addError(lang.errors.failedLeaflet(brand));
-            throw e
         }
 
         //get local prices
@@ -258,31 +266,41 @@ async function search(event) {
 
                 if (filteredProducts.length > 0) {
                     filteredProducts.forEach(product => {
-                        productList.push(productHTML(
-                            brand,
-                            product.imageUrl || 'product.png',
-                            product.imageUrl || 'product.png',
-                            product.titleTxt,
-                            product.discountedPrice,
-                            product.regularPrice,
-                            lang.availableProducts(product.availabilityRangeTxt.split(' ')[0], product.rangeColorHex, storeData.storeNameTxt || store.name, store.address.city),
-                            product.lastUpdateTxt,
-                            null,
-                            null,
-                            true
-                        ))
+                        const availability = product.availabilityRangeTxt.split(' ');
+                        productList.push({
+                            html: productHTML(
+                                brand,
+                                product.imageUrl || 'product.png',
+                                product.imageUrl || 'product.png',
+                                product.titleTxt,
+                                product.discountedPrice,
+                                product.regularPrice,
+                                lang.availableProducts(availability.slice(0, availability.length - 1).join(' '), product.rangeColorHex, storeData.storeNameTxt || store.name, store.address.city),
+                                `${lang.lastUpdate}: ${parseDanishDate(product.lastUpdateTxt.split(':')[1].trim()).toISOString().replace('T', ' ').split(':').slice(0, 2).join(':')}`,
+                                null,
+                                true
+                            ),
+                            pricePerKilo: config.priceThreshold,
+                            price: product.discountedPrice,
+                            amountAvailable: availability.slice(availability.length - 2, availability.length - 1)[0].split('-')[0],
+                        })
                     });
                 }
             } catch (e) {
                 addError(lang.errors.failedLocal(store.name, store.address.city));
-                throw e;
             }
         }
 
+        productList.sort((a, b) => {
+            if (a.amountAvailable != b.amountAvailable) return b.amountAvailable - a.amountAvailable;
+            if (a.pricePerKilo != b.pricePerKilo) return a.pricePerKilo - b.pricePerKilo;
+            if (a.price != b.price) return a.price - b.price;
+            return 0
+        })
         if (productList.length > 0) {
             totalProducts += productList.length;
-            resultContent.innerHTML += `<div class="store-header">${brand}</div>`;
-            resultContent.innerHTML += productList.join('');
+            resultContent.innerHTML += `<div class="storeHeader"><h3>${brand}</h3></div>`;
+            resultContent.innerHTML += productList.map(e => e.html).join('');
         } else {
             addWarning(lang.warnings.noPromotions(brand, productKeywords));
         }
@@ -290,6 +308,10 @@ async function search(event) {
 
     if (totalProducts > 0) {
         addMessage(lang.messages.foundPromotions(totalProducts, brandList.length, totalStores));
+        window.scroll({
+            top: resultContent.getBoundingClientRect().top,
+            behavior: "smooth",
+        })
     } else {
         addMessage(lang.messages.noPromotions)
     }
@@ -305,6 +327,10 @@ async function search(event) {
 function pageInit() {
     setCookie("preferred-language", document.documentElement.lang, 365);
     loadUserData();
+    if (document.getElementById('storeList').value) {
+        search(null);
+        saveUserData();
+    }
     window.history.replaceState(null, '', window.location.pathname);
     document.getElementById('searchForm').addEventListener('submit', async (event) => { await search(event) });
 }

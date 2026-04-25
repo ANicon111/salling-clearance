@@ -4,7 +4,6 @@ body {
     line-height: 1.6;
     background-color: #f9f9f9;
     color: #333;
-    /* Explicit default text color */
 }
 
 .languageBar {
@@ -13,7 +12,7 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: max(800px, 66%);
     margin: 0 auto;
     background: #fff;
     padding: 20px;
@@ -57,7 +56,7 @@ button {
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 18px;
 }
 
 button:hover {
@@ -75,20 +74,14 @@ button:disabled {
     padding-top: 15px;
 }
 
-.store-header {
+.storeHeader {
     background: #f1f1f1;
     padding: 10px;
     margin-top: 15px;
     border-radius: 4px;
 }
 
-.product-list {
-    list-style-type: none;
-    padding-left: 0;
-    margin: 0;
-}
-
-.product-item {
+.productItem {
     display: flex;
     gap: 15px;
     padding: 15px 10px;
@@ -96,7 +89,7 @@ button:disabled {
     align-items: center;
 }
 
-.product-image {
+.productImage {
     flex-grow: 0;
     flex-shrink: 0;
     width: 70px;
@@ -109,17 +102,17 @@ button:disabled {
     transition: transform 0.2s ease;
 }
 
-.product-image:hover {
+.productImage:hover {
     transform: scale(1.05);
 }
 
-.price-discount {
+.priceDiscount {
     color: #d9534f;
     font-weight: bold;
     font-size: 1.1em;
 }
 
-.price-regular {
+.priceRegular {
     text-decoration: line-through;
     color: #888;
     font-size: 0.9em;
@@ -134,8 +127,7 @@ button:disabled {
     border: 1px solid #d9534f;
 }
 
-/* --- New Lightbox Zoom Styles --- */
-.zoom-overlay {
+.zoomOverlay {
     display: none;
     position: fixed;
     z-index: 9999;
@@ -149,11 +141,11 @@ button:disabled {
     cursor: zoom-out;
 }
 
-.zoom-overlay.active {
+.zoomOverlay.active {
     display: flex;
 }
 
-.zoom-overlay img {
+.zoomOverlay img {
     max-width: 90%;
     max-height: 90%;
     border-radius: 8px;
@@ -161,7 +153,6 @@ button:disabled {
     object-fit: contain;
 }
 
-/* --- Dark Theme Support --- */
 @media (prefers-color-scheme: dark) {
     body {
         background-color: #121212;
@@ -185,7 +176,7 @@ button:disabled {
         color: #888;
     }
 
-    .help-text {
+    .helpText {
         color: #a0a0a0;
     }
 
@@ -198,20 +189,20 @@ button:disabled {
         border-top-color: #333;
     }
 
-    .store-header {
+    .storeHeader {
         background: #2d2d2d;
         color: #fff;
     }
 
-    .product-item {
+    .productItem {
         border-bottom-color: #333;
     }
 
-    .product-image {
+    .productImage {
         border-color: #444;
     }
 
-    .price-regular {
+    .priceRegular {
         color: #aaa;
     }
 

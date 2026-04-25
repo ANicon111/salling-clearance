@@ -14,17 +14,18 @@
     <link rel="stylesheet" href="../style.css">
     <script src="../javascript/config.js"></script>
     <script src="lang.js"></script>
+    <script src="../javascript/utils.js"></script>
     <script src="../javascript/product.js"></script>
     <script src="../javascript/script.js"></script>
     <title>Salling Deal Hunter</title>
 </head>
 
-<body onload="pageInit();">
+<body onload="pageInit('en');">
     <div id="zoomOverlay" class="zoom-overlay" onclick="this.classList.remove('active')">
         <img id="zoomedImage" src="" alt="Zoomed Product">
     </div>
-
     <div class="container">
+        <div class="languageBar"><a href="../da/index.html">dansk</a></div>
         <h1>Salling Deal Hunter</h1>
         <form id="searchForm" style="text-align: center;">
             <div class="formGroup">

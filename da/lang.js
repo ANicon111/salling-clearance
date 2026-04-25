@@ -4,7 +4,7 @@ translation["da"] = {
     search: "Søg",
     searching: "Søger...",
     availableProducts(count, countColor, store, location) {
-        return `<span style="color: ${countColor}; font-weight: bold;">;${count}</span>; tilgængelig i <strong>;${store}${location != null ? ` (${location})` : ''}</strong>;.`;
+        return `<span style="color: ${countColor}; font-weight: bold;">${count}</span> tilgængelig i <strong>${store}${location != null ? ` (${location})` : ''}</strong>.`;
     },
     errors: {
         failedLocal(store, location) {

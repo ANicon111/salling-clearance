@@ -11,18 +11,20 @@
 
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="icon.png">
+    <script src="./javascript/utils.js"></script>
     <title>Language redirect...</title>
 </head>
 
 <body>
     <p>
-        If you do not get redirected automatically I frankly do not know why you are here, since this whole app is built
-        in javascript and needs it to fetch data, but here's a list of supported languages just in case:
+        If you do not get redirected automatically I frankly do not know why you are here,
+        since this whole app is built in javascript and needs it to fetch data,
+        but here's a list of supported languages just in case:
     </p>
     <p><a href="da/index.html">Danish</a></p>
     <p><a href="en/index.html">English</a></p>
     <script>
-        const userLang = navigator.language || navigator.userLanguage;
+        const userLang = getCookie("preferred-language") || navigator.language || navigator.userLanguage;
         switch (userLang) {
             case 'da':
                 window.location.href = 'da/index.html';

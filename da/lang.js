@@ -1,4 +1,4 @@
-translation["da"] = {
+document["translation-da"] = {
     title: "Salling Tilbudsjæger",
     errorPrefix: "FEJL",
     search: "Søg",
@@ -38,4 +38,4 @@ translation["da"] = {
     }
 }
 
-var lang = translation["da"];
+var lang = document["translation-da"];

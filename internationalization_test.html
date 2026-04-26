@@ -120,10 +120,10 @@
             const outputDiv = document.getElementById('output');
             const langB = document.getElementById("otherLanguage").value;
 
-            if (!translation["en"] || !translation[langB]) return alert("Language data not found.");
+            if (!document["translation-en"] || !document[`translation-${langB}`]) return alert("Language data not found.");
 
-            const objA = flattenObject(translation["en"]);
-            const objB = flattenObject(translation[langB]);
+            const objA = flattenObject(document["translation-en"]);
+            const objB = flattenObject(document[`translation-${langB}`]);
             const allKeys = Array.from(new Set([...Object.keys(objA), ...Object.keys(objB)])).sort();
 
             let issuesFound = 0;
@@ -146,8 +146,8 @@
 
             resultBody.innerHTML = rows.join('');
             document.getElementById('summary').innerHTML = issuesFound
-                ? `<strong>Found ${issuesFound} differences.</strong>`
-                : `<strong style="color: green;">Files match!</strong>`;
+                ? `<strong>Found ${issuesFound} issues.</strong>`
+                : `<strong style="color: green;">Translation seems fine.</strong>`;
             outputDiv.style.display = 'block';
         }
     </script>

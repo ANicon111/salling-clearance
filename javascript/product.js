@@ -52,9 +52,9 @@ function productHTML(brand, largeImage, thumbImage, title, price, originalPrice,
     const imageStyle = leafletCropSalling(brand, leafletLocationsSalling);
     return `
         <li class="productItem">
-            <div class="productImage" onclick="openProductZoom(${smallImageZoom ? "this.children[0].src" : `'${largeImage || config.placeholderImage}'`});">
-                <img src="${thumbImage || config.placeholderImage}"
-                    onerror="this.onerror=null; this.src='${config.placeholderImage}';"
+            <div class="productImage" onclick="openProductZoom(${smallImageZoom ? "this.children[0].src" : `'${largeImage || assets.placeholderImage}'`});">
+                <img src="${thumbImage || assets.placeholderImage}"
+                    onerror="this.onerror=null; this.src='${assets.placeholderImage}';"
                     ${imageStyle}
                     alt="${title}">
             </div>

@@ -1,4 +1,4 @@
-translation["en"] = {
+document["translation-en"] = {
     title: "Salling Deal Hunter",
     errorPrefix: "ERROR",
     search: "Search",
@@ -38,4 +38,4 @@ translation["en"] = {
     }
 }
 
-var lang = translation["en"];
+var lang = document["translation-en"];

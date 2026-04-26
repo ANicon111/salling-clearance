@@ -248,7 +248,7 @@ async function search(event) {
 
             const promotions = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/hotspots`, 3600);
 
-            const filteredProducts = promotions.filter(product =>
+            const matchedProducts = promotions.filter(product =>
                 product.offer.heading && (
                     productKeywords.trim() == ""
                     || productKeywords.toLowerCase().split(',')
@@ -257,9 +257,11 @@ async function search(event) {
                 )
             );
 
-            if (filteredProducts.length > 0) {
-                filteredProducts.forEach(product => {
+            if (matchedProducts.length > 0) {
+                matchedProducts.forEach(product => {
                     const pricePerUnit = product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor;
+                    if (product.offer.pricing.price > config.ignoreThreshold || pricePerUnit > config.ignoreThreshold)
+                        return;
                     productList.push({
                         html: productHTML(
                             brand,
@@ -276,8 +278,8 @@ async function search(event) {
                             product.locations
                         ),
                         pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
-                            ? (pricePerUnit).toFixed(2) : config.priceThreshold,
-                        price: product.discountedPrice,
+                            ? pricePerUnit : config.expensiveThreshold,
+                        price: product.offer.pricing.price,
                         amountAvailable: 6,
                     })
                 });
@@ -297,12 +299,14 @@ async function search(event) {
 
                 const items = storeData.clearanceItems || [];
 
-                const filteredProducts = items.filter(product =>
-                    product.titleTxt && (!productKeywords || productKeywords.split(',').some(keyword => product.titleTxt.toLowerCase().includes(keyword.trim())))
+                const matchedProducts = items.filter(product =>
+                    product.titleTxt && (!productKeywords || productKeywords.split(',').some(keyword => product.titleTxt.toLowerCase().includes(keyword.trim()))) && product.discountedPrice <= config.ignoreThreshold
                 );
 
-                if (filteredProducts.length > 0) {
-                    filteredProducts.forEach(product => {
+                if (matchedProducts.length > 0) {
+                    matchedProducts.forEach(product => {
+                        if (product.discountedPrice > config.ignoreThreshold)
+                            return;
                         const availability = product.availabilityRangeTxt.split(' ');
                         productList.push({
                             html: productHTML(
@@ -317,7 +321,7 @@ async function search(event) {
                                 null,
                                 true
                             ),
-                            pricePerKilo: config.priceThreshold,
+                            pricePerKilo: config.expensiveThreshold,
                             price: product.discountedPrice,
                             amountAvailable: availability.slice(availability.length - 2, availability.length - 1)[0].split('-')[0],
                         })
@@ -333,7 +337,7 @@ async function search(event) {
             if (a.pricePerKilo != b.pricePerKilo) return a.pricePerKilo - b.pricePerKilo;
             if (a.price != b.price) return a.price - b.price;
             return 0
-        })
+        });
         if (productList.length > 0) {
             totalProducts += productList.length;
             resultContent.innerHTML += `<div class="storeHeader"><h3>${brand}</h3></div>`;

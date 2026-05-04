@@ -11,4 +11,5 @@ const config = {
         "FØTEX": "TID-F86K6Y",
         "BILKA": "TID-BZ929S"
     },
+    leafletLabelFilters: ["Nonfood", "Have", "Trend", "Outdoor", "Inspiration", "føtex ud af huset"],
 }

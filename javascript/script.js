@@ -55,7 +55,8 @@ function validateStoreLine(line) {
         if (colonSeparated.length > 1) location = colonSeparated[1]
         return [brand, location];
     }
-    catch {
+    catch (e) {
+        console.log(e);
         return [null, null];
     }
 }
@@ -241,50 +242,62 @@ async function search(event) {
         try {
             const leafletsOrder = await tenantApiGet('https://p-club.dsgapps.dk/api/cp/leafletsOrder', config.aliases[brand]);
 
-            const leaflet = leafletsOrder.leafletIds[brand == "BILKA" ? 1 : 0];
+            for (let j = 0; j < leafletsOrder.leafletIds.length; j++) {
+                const leaflet = leafletsOrder.leafletIds[j];
 
-            const leafletPages = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/pages`, 3600);
+                const leafletInfo = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}`, 3600);
 
 
-            const promotions = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/hotspots`, 3600);
+                if (config.leafletLabelFilters.some(e => leafletInfo?.label?.includes(e))) continue;
 
-            const matchedProducts = promotions.filter(product =>
-                product.offer.heading && (
-                    productKeywords.trim() == ""
-                    || productKeywords.toLowerCase().split(',')
-                        .map(keyword => keyword.trim())
-                        .some(keyword => product.offer.heading.toLowerCase().includes(keyword))
-                )
-            );
+                const leafletPages = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/pages`, 3600);
 
-            if (matchedProducts.length > 0) {
-                matchedProducts.forEach(product => {
-                    const pricePerUnit = product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor;
-                    if (product.offer.pricing.price > config.ignoreThreshold || pricePerUnit > config.ignoreThreshold)
-                        return;
-                    productList.push({
-                        html: productHTML(
-                            brand,
-                            leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png',
-                            leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png',
-                            product.offer.heading,
-                            product.offer.pricing.price.toPrecision(3),
-                            product.offer.pricing.pre_price?.toPrecision(3),
-                            `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}`,
-                            lang.availableBetween(
-                                product.offer.run_from.split('T')[0],
-                                product.offer.run_till.split('T')[0]
+                const promotions = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/hotspots`, 3600);
+
+                const matchedProducts = promotions.filter(product =>
+                    product.offer.heading && (
+                        productKeywords.trim() == ""
+                        || productKeywords.toLowerCase().split(',')
+                            .map(keyword => keyword.trim())
+                            .some(keyword => product.offer.heading.toLowerCase().includes(keyword))
+                    )
+                );
+
+                if (matchedProducts.length > 0) {
+                    matchedProducts.forEach(product => {
+                        const pricePerUnit = product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor;
+                        if (product.offer.pricing.price > config.ignoreThreshold || pricePerUnit > config.ignoreThreshold)
+                            return;
+                        productList.push({
+                            html: productHTML(
+                                brand,
+                                leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png',
+                                leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png',
+                                product.offer.heading,
+                                product.offer.pricing.price.toPrecision(3),
+                                product.offer.pricing.pre_price?.toPrecision(3),
+                                `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol} - ${leafletInfo.label}`,
+                                lang.availableBetween(
+                                    product.offer.run_from.split('T')[0],
+                                    product.offer.run_till.split('T')[0]
+                                ),
+                                {
+                                    locations: product.locations,
+                                    aspectRatio: leafletInfo?.dimensions?.height || Math.SQRT2,
+                                },
+                                false
                             ),
-                            product.locations
-                        ),
-                        pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
-                            ? pricePerUnit : config.expensiveThreshold,
-                        price: product.offer.pricing.price,
-                        amountAvailable: 6,
-                    })
-                });
+                            futurePromo: Date(product.offer.run_from) > Date(),
+                            pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
+                                ? pricePerUnit : config.expensiveThreshold,
+                            price: product.offer.pricing.price,
+                            amountAvailable: 6,
+                        })
+                    });
+                }
             }
         } catch (e) {
+            console.log(e);
             addError(lang.errors.failedLeaflet(brand));
         }
 
@@ -321,6 +334,7 @@ async function search(event) {
                                 null,
                                 true
                             ),
+                            futurePromo: false,
                             pricePerKilo: config.expensiveThreshold,
                             price: product.discountedPrice,
                             amountAvailable: availability.slice(availability.length - 2, availability.length - 1)[0].split('-')[0],
@@ -328,11 +342,13 @@ async function search(event) {
                     });
                 }
             } catch (e) {
+                console.log(e);
                 addError(lang.errors.failedLocal(store.name, store.address.city));
             }
         }
 
         productList.sort((a, b) => {
+            if (a.futurePromo != b.futurePromo) return a.futurePromo - b.futurePromo;
             if (a.amountAvailable != b.amountAvailable) return b.amountAvailable - a.amountAvailable;
             if (a.pricePerKilo != b.pricePerKilo) return a.pricePerKilo - b.pricePerKilo;
             if (a.price != b.price) return a.price - b.price;

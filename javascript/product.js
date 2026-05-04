@@ -4,15 +4,8 @@
  * @param {*} locations the values gotten from the leaflet hotspots
  * @returns {string} concrete image css
  */
-function leafletCropSalling(brand, locations) {
+function leafletCropSalling(aspectRatio, locations) {
     if (locations == null) return `style="  width: 100%; height: 100%; object-fit: contain;"`;
-    let aspectRatio = Math.SQRT2; // assume A4
-    switch (brand) {
-        case "NETTO": aspectRatio = Math.SQRT2; break;
-        case "BILKA": aspectRatio = 8 / 7; break;
-        case "FØTEX": aspectRatio = 8 / 7; break;
-    }
-    if (brand == "NETTO") aspectRatio = Math.SQRT2; //cause why not
     const points = Object.values(locations)[0];
     let x1 = points[0][0];
     let x2 = points[2][0];
@@ -44,12 +37,12 @@ function leafletCropSalling(brand, locations) {
  * @param {string} extraInfo any other source-specific info
  * @param {string} startDate start time of promotion / last update
  * @param {string} endDate end time of promotion
- * @param {*} leafletLocationsSalling extra crop info for the Salling leaflet
- * @param {boolean} smallImageZoom the zoom into the thumbnail image, disregarding the large image
+ * @param {*} leafletData extra crop info for the Salling leaflet
+ * @param {boolean} smallImageZoom zoom into the thumbnail image, disregarding the large image
  * @returns
  */
-function productHTML(brand, largeImage, thumbImage, title, price, originalPrice, extraInfo, dateLine, leafletLocationsSalling = null, smallImageZoom = false) {
-    const imageStyle = leafletCropSalling(brand, leafletLocationsSalling);
+function productHTML(brand, largeImage, thumbImage, title, price, originalPrice, extraInfo, dateLine, leafletData = null, smallImageZoom = false) {
+    const imageStyle = leafletCropSalling(leafletData?.aspectRatio, leafletData?.locations);
     return `
         <li class="productItem">
             <div class="productImage" onclick="openProductZoom(${smallImageZoom ? "this.children[0].src" : `'${largeImage || assets.placeholderImage}'`});">

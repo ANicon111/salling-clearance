@@ -12,7 +12,7 @@
     <link rel="manifest" href="manifest.json" />
     <link rel="icon" href="icon.png">
     <script src="./javascript/utils.js"></script>
-    <title>Language redirect...</title>
+    <title>Salling Deal Hunter</title>
 </head>
 
 <body>
@@ -24,14 +24,15 @@
     <p><a href="da/index.html">Danish</a></p>
     <p><a href="en/index.html">English</a></p>
     <script>
+        params = new URL(window.location.href).searchParams.toString();
+        console.log(params);
         const userLang = getCookie("preferred-language") || navigator.language || navigator.userLanguage;
+        let redirectLang = "en";
         switch (userLang) {
-            case 'da':
-                window.location.href = 'da/index.html';
-                break;
-            default:
-                window.location.href = 'en/index.html';
+            case "da":
+                redirectLang = "da";
                 break;
         }
+        window.location.href = `${redirectLang}/index.html?${params}`;
     </script>
 </body>

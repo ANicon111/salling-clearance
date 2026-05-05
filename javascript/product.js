@@ -37,7 +37,7 @@ function leafletCropSalling(aspectRatio, locations) {
  * @param {string} extraInfo any other source-specific info
  * @param {string} startDate start time of promotion / last update
  * @param {string} endDate end time of promotion
- * @param {*} leafletData extra crop info for the Salling leaflet
+ * @param {*} leafletData extra info for the leaflets
  * @param {boolean} smallImageZoom zoom into the thumbnail image, disregarding the large image
  * @returns
  */

@@ -33,35 +33,6 @@ function getCookie(name) {
 }
 
 /**
- * 
- * @param {string} value 
- * @returns {string}
- */
-function utf8ToBase64(value) {
-    if (value == null) return null;
-    const encoder = new TextEncoder();
-    const data = encoder.encode(value);
-    const binaryString = String.fromCharCode.apply(null, data);
-    return btoa(binaryString);
-}
-
-/**
- * 
- * @param {string} value 
- * @returns {string}
- */
-function base64ToUtf8(value) {
-    if (value == null) return null;
-    const binaryString = atob(value);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-    }
-    const decoder = new TextDecoder();
-    return decoder.decode(bytes);
-}
-
-/**
  * Parses a Danish date string: "09.37, 25. april 2026"
  * @param {string} dateStr 
  * @returns {Date|null}

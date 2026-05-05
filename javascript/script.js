@@ -1,7 +1,7 @@
 function loadUserData() {
     url = new URL(window.location.href);
-    document.getElementById('storeList').value = base64ToUtf8(url.searchParams.get("store-list")) || getCookie("store-list");
-    document.getElementById('productKeywords').value = base64ToUtf8(url.searchParams.get("product-keywords")) || getCookie("product-keywords");
+    document.getElementById('storeList').value = decodeURIComponent(url.searchParams.get("store-list") || "") || getCookie("store-list");
+    document.getElementById('productKeywords').value = decodeURIComponent(url.searchParams.get("product-keywords") || "") || getCookie("product-keywords");
 }
 
 function saveUserData() {
@@ -10,7 +10,7 @@ function saveUserData() {
 }
 
 function exportUserDataToClipboard() {
-    navigator.clipboard.writeText(`${window.location.href}?store-list=${utf8ToBase64(document.getElementById('storeList').value)}&product-keywords=${utf8ToBase64(document.getElementById('productKeywords').value)}`);
+    navigator.clipboard.writeText(`${window.location.href.split('/').slice(0, -2).join("/")}/index.html?store-list=${encodeURIComponent(document.getElementById('storeList').value)}&product-keywords=${encodeURIComponent(document.getElementById('productKeywords').value)}`);
     document.getElementById('exportButton').disabled = true
     setTimeout(() => {
         document.getElementById('exportButton').disabled = false
@@ -248,7 +248,7 @@ async function search(event) {
                 const leafletInfo = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}`, 3600);
 
 
-                if (config.leafletLabelFilters.some(e => leafletInfo?.label?.includes(e))) continue;
+                if (config.leafletBlacklist.some(e => leafletInfo?.label?.includes(e))) continue;
 
                 const leafletPages = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/pages`, 3600);
 
@@ -276,10 +276,11 @@ async function search(event) {
                                 product.offer.heading,
                                 product.offer.pricing.price.toPrecision(3),
                                 product.offer.pricing.pre_price?.toPrecision(3),
-                                `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol} - ${leafletInfo.label}`,
+                                `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}`,
                                 lang.availableBetween(
                                     product.offer.run_from.split('T')[0],
-                                    product.offer.run_till.split('T')[0]
+                                    product.offer.run_till.split('T')[0],
+                                    leafletInfo?.label
                                 ),
                                 {
                                     locations: product.locations,

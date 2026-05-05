@@ -12,5 +12,6 @@
       "type": "image/png"
     }
   ],
-  "display": "fullscreen"
+  "display": "fullscreen",
+  "handle_links": "preferred"
 }

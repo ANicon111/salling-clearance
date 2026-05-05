@@ -5,7 +5,7 @@ document["translation-da"] = {
     searching: "Søger...",
     lastUpdate: "Sidst opdateret",
     availableBetween(from, to, leafletLabel) {
-        return `Tilgængelig fra ${from} til ${to} i ${leafletLabel}`;
+        return `Tilgængelig fra ${from} til ${to} i "${leafletLabel}"`;
     },
     availableProducts(count, countColor, store, location) {
         return `<span style="color: ${countColor}; font-weight: bold;">${count}</span> tilgængelig i <strong>${store}${location != null ? ` (${location})` : ''}</strong>.`;

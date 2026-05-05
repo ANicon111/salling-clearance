@@ -1,14 +1,10 @@
 {
-  "lang": "en",
   "name": "Salling Deal Hunter",
-  "name_localized": {
-    "da": "Salling Tilbudsjæger"
-  },
-  "start_url": "./",
+  "start_url": "../",
   "icons": [
     {
       "sizes": "512x512",
-      "src": "./icon.png",
+      "src": "../icon.png",
       "type": "image/png"
     }
   ],

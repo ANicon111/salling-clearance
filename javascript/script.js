@@ -288,7 +288,7 @@ async function search(event) {
                                 },
                                 false
                             ),
-                            futurePromo: Date(product.offer.run_from) > Date(),
+                            futurePromo: new Date(product.offer.run_from) > new Date(),
                             pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
                                 ? pricePerUnit : config.expensiveThreshold,
                             price: product.offer.pricing.price,

@@ -11,5 +11,6 @@ const config = {
         "FØTEX": "TID-F86K6Y",
         "BILKA": "TID-BZ929S"
     },
-    leafletBlacklist: ["Nonfood", "Have", "Trend", "Outdoor", "Inspiration", "føtex ud af huset"],
+    // spell-checker: disable-next-line
+    leafletBlacklist: ["Nonfood", "Have", "Trend", "Outdoor", "Inspiration", "føtex ud af huset", "Prosonic"],
 }

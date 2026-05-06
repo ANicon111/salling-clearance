@@ -12,7 +12,8 @@ function loadUserData() {
 function saveUserData() {
     setCookie("store-list", document.getElementById("storeList").value, 365);
     setCookie("product-keywords", document.getElementById("productKeywords").value, 365);
-    setCookie("config", JSON.stringify(config), 365);
+    // TODO move this to a settings page of sort, and add a default button
+    // setCookie("config", JSON.stringify(config), 365);
 }
 
 function exportUserDataToClipboard() {

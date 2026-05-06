@@ -2,7 +2,7 @@ const assets = {
     placeholderImage: '../product.png',
 }
 
-const config = {
+const defaultConfig = {
     expensiveThreshold: 100, // the price from which stuff is "expensive"
     ignoreThreshold: 200, // the price from which stuff is ignored
     thumbSize: 70,
@@ -14,3 +14,4 @@ const config = {
     // spell-checker: disable-next-line
     leafletBlacklist: ["Nonfood", "Have", "Trend", "Outdoor", "Inspiration", "føtex ud af huset", "Prosonic"],
 }
+let config = defaultConfig;

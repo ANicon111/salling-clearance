@@ -29,7 +29,7 @@ function getCookie(name) {
             return decodeURIComponent(c.substring(name.length, c.length));
         }
     }
-    return "";
+    return null;
 }
 
 /**

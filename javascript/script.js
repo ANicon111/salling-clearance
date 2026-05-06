@@ -1,12 +1,18 @@
 function loadUserData() {
     url = new URL(window.location.href);
-    document.getElementById('storeList').value = decodeURIComponent(url.searchParams.get("store-list") || "") || getCookie("store-list");
-    document.getElementById('productKeywords').value = decodeURIComponent(url.searchParams.get("product-keywords") || "") || getCookie("product-keywords");
+    document.getElementById("storeList").value = decodeURIComponent(url.searchParams.get("store-list") || "") || getCookie("store-list");
+    document.getElementById("productKeywords").value = decodeURIComponent(url.searchParams.get("product-keywords") || "") || getCookie("product-keywords");
+    config = JSON.parse(getCookie("config")) || defaultConfig;
+    if (JSON.stringify(Object.keys(config).sort()) !== JSON.stringify(Object.keys(defaultConfig).sort())) {
+        console.log("Invalid config cookie, loading default");
+        config = defaultConfig;
+    }
 }
 
 function saveUserData() {
-    setCookie('store-list', document.getElementById('storeList').value, 365);
-    setCookie('product-keywords', document.getElementById('productKeywords').value, 365);
+    setCookie("store-list", document.getElementById("storeList").value, 365);
+    setCookie("product-keywords", document.getElementById("productKeywords").value, 365);
+    setCookie("config", JSON.stringify(config), 365);
 }
 
 function exportUserDataToClipboard() {

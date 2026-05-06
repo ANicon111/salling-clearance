@@ -275,6 +275,9 @@ async function search(event) {
                         const pricePerUnit = product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor;
                         if (product.offer.pricing.price > config.ignoreThreshold || pricePerUnit > config.ignoreThreshold)
                             return;
+                        // this shouldn't break if they start using danish time strings
+                        const runFrom = new Date(product.offer.run_from);
+                        runFrom.setHours(runFrom.getHours() + 12);
                         productList.push({
                             html: productHTML(
                                 brand,
@@ -285,7 +288,7 @@ async function search(event) {
                                 product.offer.pricing.pre_price?.toFixed(2),
                                 `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}`,
                                 lang.availableBetween(
-                                    product.offer.run_from.split('T')[0],
+                                    runFrom.toISOString().split('T')[0],
                                     product.offer.run_till.split('T')[0],
                                     leafletInfo?.label
                                 ),

@@ -11,6 +11,9 @@ document["translation-da"] = {
         return `<span style="color: ${countColor}; font-weight: bold;">${count}</span> tilgængelig i <strong>${store}${location != null ? ` (${location})` : ''}</strong>.`;
     },
     errors: {
+        failedStoreList(brand) {
+            return `Kunne ikke hente butikker for ${brand}.`;
+        },
         failedLocal(store, location) {
             return `Kunne ikke hente lokale priser for ${store}${location != null ? ` (${location})` : ''}.`;
         },

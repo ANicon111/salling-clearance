@@ -68,62 +68,82 @@ function validateStoreLine(line) {
     }
 }
 
-function cleanLocalStorage() {
-    const deleteList = [];
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        const value = JSON.parse(localStorage.getItem(key));
-        if (new Date(value.expiry) < new Date()) {
-            deleteList.push(key);
+/**
+ * 
+ * @param {string} url 
+ * @param {string} headers 
+ * @param {number} validForSeconds
+ * @param {*} getCache 
+ * @param {string} cacheID 
+ * @param {string} errorMessage 
+ * @param {boolean} [showError=true] 
+ * @returns
+ */
+async function updateCache(url, headers, validForSeconds, getCache, cacheID, errorMessage, showError = true) {
+    try {
+        const time = new Date();
+        if (getCache != null && new Date(getCache.expiry) > time) return null;
+        const response = await fetch(url, {
+            method: "GET",
+            headers: headers
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
-    }
-    for (let i = 0; i < deleteList.length; i++) {
-        localStorage.removeItem(deleteList[i]);
+        result = await response.json();
+        if (validForSeconds > 0) {
+            localStorage.setItem(cacheID, JSON.stringify({
+                value: result,
+                expiry: new Date(time.getTime() + validForSeconds * 1000),
+            }));
+        }
+        return result;
+    } catch (e) {
+        console.log(e);
+        if (showError) addError(errorMessage);
     }
 }
 
+let currentGets = new Map();
 /**
  * 
  * @param {string} url 
  * @param {*} headers 
- * @param {number} [validForSeconds=0] 
+ * @param {string} [errorMessage]
+ * @param {number} [validForSeconds] 
  */
-async function genericGet(url, headers, validForSeconds = 5) {
-    const time = new Date();
+async function genericGet(url, headers, errorMessage, updateCacheIfExists, validForSeconds) {
     const cacheID = `get-${url}-${Object.keys(headers).join('_')}-${Object.values(headers).join('_')}`;
     const getCache = JSON.parse(localStorage.getItem(cacheID));
     if (getCache != null) {
+        if (updateCacheIfExists) {
+            console.log(currentGets.size);
+            if (config.parallelRequestLimit > 0 && currentGets.size >= config.parallelRequestLimit) {
+                await Promise.any(currentGets.values())
+            }
+            currentGets.set(cacheID, updateCache(url, headers, validForSeconds, getCache, cacheID, errorMessage).then(_ => currentGets.delete(cacheID)));
+        }
         return getCache.value;
+    } else {
+        // do not show error message again if a request fails both initially and on redraw AND there's no cache.
+        return await updateCache(url, headers, validForSeconds, getCache, cacheID, errorMessage, updateCacheIfExists);
     }
-    const response = await fetch(url, {
-        method: "GET",
-        headers: headers
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    result = await response.json()
-    if (validForSeconds > 0) {
-        localStorage.setItem(cacheID, JSON.stringify({
-            value: result,
-            expiry: new Date(time.getTime() + validForSeconds * 1000),
-        }));
-    }
-    return result;
 }
-
 /**
  * 
- * @param {string} url 
- * @param {number} [validForSeconds=0] 
+ * @param {string} url
+ * @param {string} errorMessage  
+ * @param {number} [validForSeconds=5] 
  */
-async function apiGet(url, validForSeconds = 5) {
+async function apiGet(url, errorMessage, updateCacheIfExists, validForSeconds = 5) {
     return genericGet(
         url,
         {
             "Accept-Encoding": "text/json",
         },
+        errorMessage,
+        updateCacheIfExists,
         validForSeconds
     );
 }
@@ -132,29 +152,37 @@ async function apiGet(url, validForSeconds = 5) {
  * 
  * @param {string} url 
  * @param {string} tenantAlias 
- * @param {number} [validForSeconds=0] 
+ * @param {string} errorMessage 
+ * @param {number} [validForSeconds=5] 
  */
-async function tenantApiGet(url, tenantAlias, validForSeconds = 5) {
+async function tenantApiGet(url, tenantAlias, errorMessage, updateCacheIfExists, validForSeconds = 5) {
     return genericGet(
         url,
         {
             "Accept-Encoding": "text/json",
             "X-tenantAlias": tenantAlias,
         },
+        errorMessage,
+        updateCacheIfExists,
         validForSeconds
     );
 }
 
-function resetMessages() {
-
+/**
+ * 
+ * @param {string} value 
+ */
+function addToResultMessages(value) {
+    if (!document.getElementById('resultMessages').innerHTML.includes(value))
+        document.getElementById('resultMessages').innerHTML += value;
 }
 
 /**
  * 
  * @param {string} message 
  */
-function addMessage(message) {
-    document.getElementById('resultMessages').innerHTML += `<p class="message">${message}</p>`;
+function addMessages(message) {
+    addToResultMessages(`<p class="message">${message}</p>`);
 }
 
 /**
@@ -162,7 +190,8 @@ function addMessage(message) {
  * @param {string} warning 
  */
 function addWarning(warning) {
-    document.getElementById('resultMessages').innerHTML += `<p class="warning">${lang.warningPrefix}: ${warning}</p>`;
+    addToResultMessages(`<p class="warning">${lang.warningPrefix}: ${warning}</p>`);
+
 }
 
 /**
@@ -170,7 +199,7 @@ function addWarning(warning) {
  * @param {string} error 
  */
 function addError(error) {
-    document.getElementById('resultMessages').innerHTML += `<p class="error">${lang.errorPrefix}: ${error}</p>`;
+    addToResultMessages(`<p class="error">${lang.errorPrefix}: ${error}</p>`);
 }
 
 const brandAllStoreList = {};
@@ -188,23 +217,39 @@ function getStores(brand, location) {
     ).slice(0, 3);
 }
 
+function garbageCollectLocalStorage() {
+    const deleteList = [];
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        const value = JSON.parse(localStorage.getItem(key));
+        const expiry = new Date(value.expiry);
+        expiry.setDate(expiry.getDate() + 7);
+        if (expiry < new Date()) {
+            deleteList.push(key);
+        }
+    }
+    for (let i = 0; i < deleteList.length; i++) {
+        localStorage.removeItem(deleteList[i]);
+    }
+}
+
 /**
  * 
  * @param {SubmitEvent} event 
  */
-async function search(event) {
+async function search(event, visualOnlyRerun = false) {
     event?.preventDefault();
     const storeListLines = document.getElementById('storeList').value.split('\n');
     const searchButton = document.getElementById('searchButton');
     const productKeywords = document.getElementById('productKeywords').value;
     const resultContent = document.getElementById('resultContent');
     resultContent.innerHTML = "";
-    document.getElementById('resultMessages').innerHTML = "";
     searchButton.disabled = true;
     searchButton.textContent = lang.searching;
+    if (!visualOnlyRerun) document.getElementById('resultMessages').innerHTML = "";
     const brandStoreList = {};
 
-    cleanLocalStorage();
+    garbageCollectLocalStorage();
 
     // get matched stores
     for (let i = 0; i < storeListLines.length; i++) {
@@ -217,7 +262,7 @@ async function search(event) {
         }
 
 
-        brandAllStoreList[brand] = await tenantApiGet("https://p-club.dsgapps.dk/api/cp/stores", config.aliases[brand], 3600);
+        brandAllStoreList[brand] = await tenantApiGet("https://p-club.dsgapps.dk/api/cp/stores", config.aliases[brand], lang.errors.failedStoreList(brand), !visualOnlyRerun, 3600) || [];
 
 
         if (brandStoreList[brand] == null) {
@@ -247,19 +292,19 @@ async function search(event) {
 
         // get leaflet promotions
         try {
-            const leafletsOrder = await tenantApiGet('https://p-club.dsgapps.dk/api/cp/leafletsOrder', config.aliases[brand]);
+            const leafletsOrder = await tenantApiGet('https://p-club.dsgapps.dk/api/cp/leafletsOrder', config.aliases[brand], lang.errors.failedLeaflet(brand), !visualOnlyRerun);
 
             for (let j = 0; j < leafletsOrder.leafletIds.length; j++) {
                 const leaflet = leafletsOrder.leafletIds[j];
 
-                const leafletInfo = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}`, 3600);
+                const leafletInfo = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}`, lang.errors.failedLeaflet(brand), !visualOnlyRerun, 3600);
 
 
                 if (config.leafletBlacklist.some(e => leafletInfo?.label?.includes(e))) continue;
 
-                const leafletPages = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/pages`, 3600);
+                const leafletPages = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/pages`, lang.errors.failedLeaflet(brand), !visualOnlyRerun, 3600);
 
-                const promotions = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/hotspots`, 3600);
+                const promotions = await apiGet(`https://squid-api.tjek.com/v2/catalogs/${leaflet}/hotspots`, lang.errors.failedLeaflet(brand), !visualOnlyRerun, 3600);
 
                 const matchedProducts = promotions.filter(product =>
                     product.offer.heading && (
@@ -319,7 +364,7 @@ async function search(event) {
             const store = storeList[j];
 
             try {
-                const storeData = await tenantApiGet(`https://p-club.dsgapps.dk/api/cp/lpr/clearanceItems?id=${store.id}`, config.aliases[brand]);
+                const storeData = await tenantApiGet(`https://p-club.dsgapps.dk/api/cp/lpr/clearanceItems?id=${store.id}`, config.aliases[brand], lang.errors.failedLocal(store.name, store.address.city), !visualOnlyRerun);
 
                 const items = storeData.clearanceItems || [];
 
@@ -375,17 +420,25 @@ async function search(event) {
     }
 
     if (totalProducts > 0) {
-        addMessage(lang.messages.foundPromotions(totalProducts, brandList.length, totalStores));
-        window.scroll({
-            top: resultContent.getBoundingClientRect().top + window.scrollY,
-            behavior: "smooth",
-        })
+        if (visualOnlyRerun) {
+            addMessages(lang.messages.foundPromotions(totalProducts, brandList.length, totalStores));
+            window.scroll({
+                top: resultContent.getBoundingClientRect().top + window.scrollY,
+                behavior: "smooth",
+            });
+        }
     } else {
-        addMessage(lang.messages.noPromotions)
+        addMessages(lang.messages.noPromotions)
     }
 
+    await Promise.allSettled(currentGets.values());
+    currentGets = new Map();
     searchButton.disabled = false;
     searchButton.textContent = lang.search;
+
+    // amazing bodge that shouldn't exist, yet is very elegant in how little code it uses
+    // reruns search only on cached data after all the requests are completed to update the page
+    if (!visualOnlyRerun) await search(event, true);
 }
 
 /**

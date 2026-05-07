@@ -11,6 +11,9 @@ document["translation-en"] = {
         return `<span style="color: ${countColor}; font-weight: bold;">${count}</span> available in <strong>${store}${location != null ? ` (${location})` : ''}</strong>.`
     },
     errors: {
+        failedStoreList(brand) {
+            return `Failed to get list of stores for ${brand}.`
+        },
         failedLocal(store, location) {
             return `Failed to get local prices for ${store}${location != null ? ` (${location})` : ''}.`
         },

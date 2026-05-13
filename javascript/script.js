@@ -68,6 +68,7 @@ function validateStoreLine(line) {
     }
 }
 
+let currentGets = new Map();
 /**
  * 
  * @param {string} url 
@@ -80,6 +81,9 @@ function validateStoreLine(line) {
  * @returns
  */
 async function updateCache(url, headers, validForSeconds, getCache, cacheID, errorMessage, showError = true) {
+    if (config.parallelRequestLimit > 0 && currentGets.size >= config.parallelRequestLimit) {
+        await Promise.any(currentGets.values())
+    }
     try {
         const time = new Date();
         if (getCache != null && new Date(getCache.expiry) > time) return null;
@@ -105,7 +109,6 @@ async function updateCache(url, headers, validForSeconds, getCache, cacheID, err
     }
 }
 
-let currentGets = new Map();
 /**
  * 
  * @param {string} url 
@@ -118,10 +121,6 @@ async function genericGet(url, headers, errorMessage, updateCacheIfExists, valid
     const getCache = JSON.parse(localStorage.getItem(cacheID));
     if (getCache != null) {
         if (updateCacheIfExists) {
-            console.log(currentGets.size);
-            if (config.parallelRequestLimit > 0 && currentGets.size >= config.parallelRequestLimit) {
-                await Promise.any(currentGets.values())
-            }
             currentGets.set(cacheID, updateCache(url, headers, validForSeconds, getCache, cacheID, errorMessage).then(_ => currentGets.delete(cacheID)));
         }
         return getCache.value;
@@ -233,6 +232,23 @@ function garbageCollectLocalStorage() {
     }
 }
 
+let showGroupDisabled = false;
+/**
+ * Hides all groups and shows the one for the provided brand
+ * @param {string} brand 
+ */
+function showGroup(brand) {
+    if (showGroupDisabled) return;
+    let productGroups = document.getElementsByClassName("productGroup");
+    let storeHeaders = document.getElementsByClassName("storeHeader");
+    for (let i = 0; i < productGroups.length; i++) {
+        productGroups[i].classList.remove("selected");
+        storeHeaders[i].classList.remove("selected");
+    }
+    document.getElementById(`productGroup-${brand}`).classList.add("selected");
+    document.getElementById(`storeHeader-${brand}`).classList.add("selected");
+}
+
 /**
  * 
  * @param {SubmitEvent} event 
@@ -243,9 +259,12 @@ async function search(event, visualOnlyRerun = false) {
     const searchButton = document.getElementById('searchButton');
     const productKeywords = document.getElementById('productKeywords').value;
     const resultContent = document.getElementById('resultContent');
+    const resultTabs = document.getElementById('resultTabs');
     resultContent.innerHTML = "";
+    resultTabs.innerHTML = "";
     searchButton.disabled = true;
     searchButton.textContent = lang.searching;
+    showGroupDisabled = true;
     if (!visualOnlyRerun) document.getElementById('resultMessages').innerHTML = "";
     const brandStoreList = {};
 
@@ -412,8 +431,8 @@ async function search(event, visualOnlyRerun = false) {
         });
         if (productList.length > 0) {
             totalProducts += productList.length;
-            resultContent.innerHTML += `<div class="storeHeader"><h3>${brand}</h3></div>`;
-            resultContent.innerHTML += productList.map(e => e.html).join('');
+            resultTabs.innerHTML += `<span class="storeHeader" id="storeHeader-${brand}" onclick="showGroup('${brand}');"><h3>${brand}</h3></div>`;
+            resultContent.innerHTML += `<div class="productGroup" id="productGroup-${brand}">${productList.map(e => e.html).join('')}</div>`;
         } else {
             addWarning(lang.warnings.noPromotions(brand, productKeywords));
         }
@@ -431,8 +450,14 @@ async function search(event, visualOnlyRerun = false) {
         addMessages(lang.messages.noPromotions)
     }
 
+    // TODO: sometimes between tomorrow and never split the rendering and request logic for true parallelism 
+    // and to avoid this kind of garbage
+    showGroupDisabled = false;
+    showGroup(brandList[0]);
+    if (!visualOnlyRerun) showGroupDisabled = true;
+
     await Promise.allSettled(currentGets.values());
-    currentGets = new Map();
+    currentGets.clear();
     searchButton.disabled = false;
     searchButton.textContent = lang.search;
 

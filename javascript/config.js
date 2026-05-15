@@ -6,7 +6,6 @@ const defaultConfig = {
     parallelRequestLimit: 3, // I don't wanna upset the Salling servers with this app
     expensiveThreshold: 100, // the price from which stuff is "expensive"
     ignoreThreshold: 200, // the price from which stuff is ignored
-    thumbSize: 70,
     aliases: {
         "NETTO": "TID-2Y7JRG",
         "FØTEX": "TID-F86K6Y",

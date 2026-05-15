@@ -12,7 +12,7 @@ body {
 }
 
 .container {
-    max-width: max(800px, 66.6%);
+    max-width: 100%;
     margin: 0 auto;
     background: #fff;
     padding: 1.25rem;
@@ -29,9 +29,9 @@ label {
 input[type="text"],
 textarea {
     width: 100%;
-    padding: 0.625rem;
+    padding: 0.5rem;
     box-sizing: border-box;
-    border: 0.0625rem solid #ccc;
+    border: 0.05rem solid #ccc;
     border-radius: 0.25rem;
     font-family: inherit;
 }
@@ -71,7 +71,7 @@ button:disabled {
 #results {
     margin-top: 1.25rem;
     border-top: 0.125rem solid #eee;
-    padding-top: 0.9375rem;
+    padding-top: 1rem;
 }
 
 #resultTabs {
@@ -82,7 +82,7 @@ button:disabled {
     background: #f1f1f1;
     flex-basis: 100%;
     text-align: center;
-    padding: 0.625rem;
+    padding: 0.5rem;
     border: 0.01rem solid #888;
     margin: 0;
 }
@@ -93,31 +93,41 @@ button:disabled {
 
 .productGroup {
     display: none;
+    justify-content: center;
+    width: 100%;
+    gap: 2rem;
+    flex-wrap: wrap;
 }
 
 .productGroup.selected {
-    display: block !important;
+    display: flex !important;
 }
 
 .productItem {
     display: flex;
-    gap: 0.9375rem;
-    padding: 0.9375rem 0.625rem;
-    border-bottom: 0.0625rem solid #eee;
+    flex-wrap: wrap;
+    flex: 10 10 30rem;
+    gap: 1rem;
+    padding: 1rem 0.5rem;
+    border-bottom: 0.05rem solid #eee;
     align-items: center;
 }
 
 .productImage {
-    flex-grow: 0;
-    flex-shrink: 0;
-    width: 4.375rem;
-    height: 4.375rem;
+    margin: auto;
+    flex: 0 0 auto;
+    width: 100px;
+    height: 100px;
     object-fit: contain;
     overflow: hidden;
-    border-radius: 0.375rem;
-    border: 0.0625rem solid #ddd;
+    border-radius: 10px;
+    border: 1px solid #ddd;
     cursor: pointer;
     transition: transform 0.2s ease;
+}
+
+.productText {
+    flex: 10 10 20rem;
 }
 
 .productImage:hover {
@@ -140,9 +150,9 @@ button:disabled {
 .error {
     color: #d9534f;
     background: #fdf7f7;
-    padding: 0.625rem;
+    padding: 0.5rem;
     border-radius: 0.25rem;
-    border: 0.0625rem solid #d9534f;
+    border: 0.05rem solid #d9534f;
 }
 
 .zoomOverlay {
@@ -167,7 +177,7 @@ button:disabled {
     max-width: 90%;
     max-height: 90%;
     border-radius: 0.5rem;
-    box-shadow: 0 0.25rem 0.9375rem rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.25rem 1rem rgba(0, 0, 0, 0.5);
     object-fit: contain;
 }
 

@@ -16,7 +16,7 @@ function leafletCropSalling(aspectRatio, locations) {
     y2 = y1 + square;
     if (x1 + square > 1) { x1 = 1 - square; x2 = 1; }
     if (y1 + square > aspectRatio) { y1 = aspectRatio - square; y2 = aspectRatio; }
-    const dimension = config.thumbSize / square;
+    const dimension = 100 / square;
     const width = dimension;
     const height = dimension * aspectRatio;
     const top = y1 * dimension;
@@ -44,23 +44,23 @@ function leafletCropSalling(aspectRatio, locations) {
 function productHTML(brand, largeImage, thumbImage, title, price, originalPrice, extraInfo, dateLine, leafletData = null, smallImageZoom = false) {
     const imageStyle = leafletCropSalling(leafletData?.aspectRatio, leafletData?.locations);
     return `
-        <li class="productItem">
+        <div class="productItem">
             <div class="productImage" onclick="openProductZoom(${smallImageZoom ? "this.children[0].src" : `'${largeImage || assets.placeholderImage}'`});">
                 <img src="${thumbImage || assets.placeholderImage}"
                     onerror="this.onerror=null; this.src='${assets.placeholderImage}';"
                     ${imageStyle}
                     alt="${title}">
             </div>
-            <div>
+            <div class="productText">
                 <strong>${title}</strong><br>
                 <span class="priceDiscount">${price} DKK</span>
                 ${originalPrice ? `<span class="priceRegular">${originalPrice} DKK</span>` : ''}
                 <br>
                 ${extraInfo}
-                <small>
+                <small${leafletData?.futurePromo ? ' style="color: #888;font-style:italic;"' : ''}>
                     <br>${dateLine}
                 </small>
             </div>
-        </li>
+        </div>
     `;
 }

@@ -5,7 +5,7 @@ document["translation-en"] = {
     searching: "Searching...",
     lastUpdate: "Last update",
     availableBetween(from, to, leafletLabel) {
-        return `Available between ${from} and ${to} in "${leafletLabel}"`;
+        return `Available between ${from} and ${to}<br>From "${leafletLabel}"`;
     },
     availableProducts(count, countColor, store, location) {
         return `<span style="color: ${countColor}; font-weight: bold;">${count}</span> available in <strong>${store}${location != null ? ` (${location})` : ''}</strong>.`

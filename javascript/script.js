@@ -342,6 +342,7 @@ async function search(event, visualOnlyRerun = false) {
                         // this shouldn't break if they start using danish time strings
                         const runFrom = new Date(product.offer.run_from);
                         runFrom.setHours(runFrom.getHours() + 12);
+                        const futurePromo = new Date(product.offer.run_from) > new Date();
                         productList.push({
                             html: productHTML(
                                 brand,
@@ -359,10 +360,11 @@ async function search(event, visualOnlyRerun = false) {
                                 {
                                     locations: product.locations,
                                     aspectRatio: leafletInfo?.dimensions?.height || Math.SQRT2,
+                                    futurePromo: futurePromo,
                                 },
                                 false
                             ),
-                            futurePromo: new Date(product.offer.run_from) > new Date(),
+                            futurePromo: futurePromo,
                             pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
                                 ? pricePerUnit : config.expensiveThreshold,
                             price: product.offer.pricing.price,

@@ -248,6 +248,22 @@ function showGroup(brand) {
     document.getElementById(`productGroup-${brand}`).classList.add("selected");
     document.getElementById(`storeHeader-${brand}`).classList.add("selected");
 }
+/**
+ * 
+ * @param {string} price 
+ * @param {string|null} productName 
+ */
+function approximatePricePerKilo(price, productName) {
+    productName = (productName || "").toLowerCase();
+    const keys = Object.keys(config.keywordAverageWeight);
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+        if (productName.includes(key)) {
+            return price / config.keywordAverageWeight[key];
+        }
+    }
+    return price / 0.1; //100 g "sane" default
+}
 
 /**
  * 
@@ -368,7 +384,6 @@ async function search(event, visualOnlyRerun = false) {
                             pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
                                 ? pricePerUnit : config.expensiveThreshold,
                             price: product.offer.pricing.price,
-                            amountAvailable: 6,
                         })
                     });
                 }
@@ -412,9 +427,8 @@ async function search(event, visualOnlyRerun = false) {
                                 true
                             ),
                             futurePromo: false,
-                            pricePerKilo: config.expensiveThreshold,
-                            price: product.discountedPrice,
-                            amountAvailable: availability.slice(availability.length - 2, availability.length - 1)[0].split('-')[0],
+                            pricePerKilo: approximatePricePerKilo(product.discountedPrice, product.titleTxt),
+                            price: product.discountedPrice
                         })
                     });
                 }
@@ -426,7 +440,6 @@ async function search(event, visualOnlyRerun = false) {
 
         productList.sort((a, b) => {
             if (a.futurePromo != b.futurePromo) return a.futurePromo - b.futurePromo;
-            if (a.amountAvailable != b.amountAvailable) return b.amountAvailable - a.amountAvailable;
             if (a.pricePerKilo != b.pricePerKilo) return a.pricePerKilo - b.pricePerKilo;
             if (a.price != b.price) return a.price - b.price;
             return 0

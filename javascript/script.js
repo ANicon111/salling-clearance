@@ -352,39 +352,48 @@ async function search(event, visualOnlyRerun = false) {
 
                 if (matchedProducts.length > 0) {
                     matchedProducts.forEach(product => {
-                        const pricePerUnit = product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor;
-                        if (product.offer.pricing.price > config.ignoreThreshold || pricePerUnit > config.ignoreThreshold)
+                        const pricePerUnitLower = product.offer.pricing.price / product.offer.quantity.size.to / product.offer.quantity.unit.si.factor;
+
+                        if (product.offer.pricing.price > config.ignoreThreshold || pricePerUnitLower > config.ignoreThreshold)
                             return;
                         // this shouldn't break if they start using danish time strings
                         const runFrom = new Date(product.offer.run_from);
                         runFrom.setHours(runFrom.getHours() + 12);
                         const futurePromo = new Date(product.offer.run_from) > new Date();
-                        productList.push({
-                            html: productHTML(
-                                brand,
-                                leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png',
-                                leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png',
-                                product.offer.heading,
-                                product.offer.pricing.price.toFixed(2),
-                                product.offer.pricing.pre_price?.toFixed(2),
-                                `${product.offer.quantity.size.from} ${product.offer.quantity.unit.symbol}, ${(pricePerUnit).toFixed(2)} DKK/${product.offer.quantity.unit.si.symbol}`,
-                                lang.availableBetween(
-                                    runFrom.toISOString().split('T')[0],
-                                    product.offer.run_till.split('T')[0],
-                                    leafletInfo?.label
+                        let priceText = pricePerUnitLower.toFixed(2);
+                        let sizeText = product.offer.quantity.size.from;
+                        if (product.offer.quantity.size.from != product.offer.quantity.size.to) {
+                            const pricePerUnitUpper = product.offer.pricing.price / product.offer.quantity.size.from / product.offer.quantity.unit.si.factor;
+                            priceText = `${pricePerUnitLower.toFixed(2)}-${pricePerUnitUpper.toFixed(2)}`;
+                            sizeText = `${product.offer.quantity.size.from}-${product.offer.quantity.size.to}`;
+                        }
+                        if (priceText)
+                            productList.push({
+                                html: productHTML(
+                                    brand,
+                                    leafletPages[Object.keys(product.locations)[0] - 1]?.view || 'product.png',
+                                    leafletPages[Object.keys(product.locations)[0] - 1]?.thumb || 'product.png',
+                                    product.offer.heading,
+                                    product.offer.pricing.price.toFixed(2),
+                                    product.offer.pricing.pre_price?.toFixed(2),
+                                    `${sizeText} ${product.offer.quantity.unit.symbol}, ${priceText} DKK/${product.offer.quantity.unit.si.symbol}`,
+                                    lang.availableBetween(
+                                        runFrom.toISOString().split('T')[0],
+                                        product.offer.run_till.split('T')[0],
+                                        leafletInfo?.label
+                                    ),
+                                    {
+                                        locations: product.locations,
+                                        aspectRatio: leafletInfo?.dimensions?.height || Math.SQRT2,
+                                        futurePromo: futurePromo,
+                                    },
+                                    false
                                 ),
-                                {
-                                    locations: product.locations,
-                                    aspectRatio: leafletInfo?.dimensions?.height || Math.SQRT2,
-                                    futurePromo: futurePromo,
-                                },
-                                false
-                            ),
-                            futurePromo: futurePromo,
-                            pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
-                                ? pricePerUnit : config.expensiveThreshold,
-                            price: product.offer.pricing.price,
-                        })
+                                futurePromo: futurePromo,
+                                pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
+                                    ? pricePerUnitLower : config.expensiveThreshold,
+                                price: product.offer.pricing.price,
+                            })
                     });
                 }
             }

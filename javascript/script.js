@@ -390,8 +390,9 @@ async function search(event, visualOnlyRerun = false) {
                                     false
                                 ),
                                 futurePromo: futurePromo,
-                                pricePerKilo: ["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
-                                    ? pricePerUnitLower : config.expensiveThreshold,
+                                score: (["kg", "l"].includes(product.offer.quantity.unit.si.symbol)
+                                    ? pricePerUnitLower : config.expensiveThreshold)
+                                    * Math.sqrt(product.offer.pricing.price / (product.offer.pricing.pre_price ?? product.offer.pricing.price)), // adjustment for % discount,
                                 price: product.offer.pricing.price,
                             })
                     });
@@ -436,7 +437,9 @@ async function search(event, visualOnlyRerun = false) {
                                 true
                             ),
                             futurePromo: false,
-                            pricePerKilo: approximatePricePerKilo(product.discountedPrice, product.titleTxt),
+                            score: approximatePricePerKilo(product.discountedPrice, product.titleTxt)
+                                * (product.availabilityRangeTxt=="1-5 stk." ? 3 : 1) // penalty for nearly sold out products
+                                * Math.sqrt(product.discountedPrice / (product.regularPrice ?? product.discountedPrice) ), // adjustment for % discount
                             price: product.discountedPrice
                         })
                     });
@@ -449,11 +452,12 @@ async function search(event, visualOnlyRerun = false) {
 
         productList.sort((a, b) => {
             if (a.futurePromo != b.futurePromo) return a.futurePromo - b.futurePromo;
-            if (a.pricePerKilo != b.pricePerKilo) return a.pricePerKilo - b.pricePerKilo;
+            if (a.score != b.score) return a.score - b.score;
             if (a.price != b.price) return a.price - b.price;
             return 0
         });
         if (productList.length > 0) {
+            console.log(productList.map(p => p.score))
             totalProducts += productList.length;
             resultTabs.innerHTML += `<span class="storeHeader" id="storeHeader-${brand}" onclick="showGroup('${brand}');"><h3>${brand}</h3></div>`;
             resultContent.innerHTML += `<div class="productGroup" id="productGroup-${brand}">${productList.map(e => e.html).join('')}</div>`;

@@ -327,7 +327,7 @@ async function search(event, visualOnlyRerun = false) {
 
         // get leaflet promotions
         try {
-            const leafletsOrder = await tenantApiGet('https://p-club.dsgapps.dk/api/cp/leafletsOrder', config.aliases[brand], lang.errors.failedLeaflet(brand), !visualOnlyRerun);
+            const leafletsOrder = await tenantApiGet('https://p-club.dsgapps.dk/api/cp/leafletsOrder', config.aliases[brand], lang.errors.failedLeaflet(brand), true);
 
             for (let j = 0; j < leafletsOrder.leafletIds.length; j++) {
                 const leaflet = leafletsOrder.leafletIds[j];
@@ -438,8 +438,8 @@ async function search(event, visualOnlyRerun = false) {
                             ),
                             futurePromo: false,
                             score: approximatePricePerKilo(product.discountedPrice, product.titleTxt)
-                                * (product.availabilityRangeTxt=="1-5 stk." ? 3 : 1) // penalty for nearly sold out products
-                                * Math.sqrt(product.discountedPrice / (product.regularPrice ?? product.discountedPrice) ), // adjustment for % discount
+                                * (product.availabilityRangeTxt == "1-5 stk." ? 3 : 1) // penalty for nearly sold out products
+                                * Math.sqrt(product.discountedPrice / (product.regularPrice ?? product.discountedPrice)), // adjustment for % discount
                             price: product.discountedPrice
                         })
                     });
@@ -457,7 +457,6 @@ async function search(event, visualOnlyRerun = false) {
             return 0
         });
         if (productList.length > 0) {
-            console.log(productList.map(p => p.score))
             totalProducts += productList.length;
             resultTabs.innerHTML += `<span class="storeHeader" id="storeHeader-${brand}" onclick="showGroup('${brand}');"><h3>${brand}</h3></div>`;
             resultContent.innerHTML += `<div class="productGroup" id="productGroup-${brand}">${productList.map(e => e.html).join('')}</div>`;
